@@ -134,7 +134,7 @@ export function DashboardPage() {
         </Card>
       </div>
 
-      <Card className="getting-started" id="members">
+      <Card className="getting-started">
         <CardHeader className="card-header--split">
           <div>
             <CardTitle>Getting started</CardTitle>
@@ -154,9 +154,6 @@ export function DashboardPage() {
           ))}
         </CardContent>
       </Card>
-
-      <span className="anchor-target" id="api-keys" />
-      <span className="anchor-target" id="settings" />
     </div>
   )
 }
