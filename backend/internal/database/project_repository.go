@@ -2,89 +2,107 @@ package database
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
+	flagstackent "github.com/flagstack/flagstack/backend/ent"
+	entenvironment "github.com/flagstack/flagstack/backend/ent/environment"
+	entfeatureflag "github.com/flagstack/flagstack/backend/ent/featureflag"
+	entproject "github.com/flagstack/flagstack/backend/ent/project"
 	coreproject "github.com/flagstack/flagstack/backend/internal/project"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/google/uuid"
 )
 
 type ProjectRepository struct {
-	pool *pgxpool.Pool
+	client *flagstackent.Client
 }
 
-func NewProjectRepository(pool *pgxpool.Pool) *ProjectRepository {
-	return &ProjectRepository{pool: pool}
+func NewProjectRepository(client *flagstackent.Client) *ProjectRepository {
+	return &ProjectRepository{client: client}
 }
 
 func (r *ProjectRepository) List(ctx context.Context, organisationID string) ([]coreproject.Project, error) {
-	rows, err := r.pool.Query(ctx, `
-		SELECT
-			p.id::text,
-			p.organisation_id::text,
-			p.name,
-			p.key,
-			p.description,
-			(SELECT count(*) FROM environments e WHERE e.project_id = p.id),
-			(SELECT count(*) FROM feature_flags f WHERE f.project_id = p.id AND f.archived_at IS NULL),
-			p.created_at
-		FROM projects p
-		WHERE p.organisation_id = $1 AND p.archived_at IS NULL
-		ORDER BY p.created_at DESC, p.id DESC
-	`, organisationID)
+	organisationUUID, err := uuid.Parse(organisationID)
+	if err != nil {
+		return nil, fmt.Errorf("parse organisation ID: %w", err)
+	}
+
+	entities, err := r.client.Project.Query().
+		Where(
+			entproject.OrganisationID(organisationUUID),
+			entproject.ArchivedAtIsNil(),
+		).
+		Order(
+			flagstackent.Desc(entproject.FieldCreatedAt),
+			flagstackent.Desc(entproject.FieldID),
+		).
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list projects: %w", err)
 	}
-	defer rows.Close()
 
-	projects := make([]coreproject.Project, 0)
-	for rows.Next() {
-		var project coreproject.Project
-		if err := rows.Scan(
-			&project.ID,
-			&project.OrganisationID,
-			&project.Name,
-			&project.Key,
-			&project.Description,
-			&project.EnvironmentCount,
-			&project.FeatureFlagCount,
-			&project.CreatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("scan project: %w", err)
+	projects := make([]coreproject.Project, 0, len(entities))
+	for _, entity := range entities {
+		environmentCount, err := r.client.Environment.Query().
+			Where(
+				entenvironment.OrganisationID(organisationUUID),
+				entenvironment.ProjectID(entity.ID),
+			).
+			Count(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("count project environments: %w", err)
 		}
-		projects = append(projects, project)
+
+		featureFlagCount, err := r.client.FeatureFlag.Query().
+			Where(
+				entfeatureflag.OrganisationID(organisationUUID),
+				entfeatureflag.ProjectID(entity.ID),
+				entfeatureflag.ArchivedAtIsNil(),
+			).
+			Count(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("count project feature flags: %w", err)
+		}
+
+		projects = append(projects, coreproject.Project{
+			ID:               entity.ID.String(),
+			OrganisationID:   entity.OrganisationID.String(),
+			Name:             entity.Name,
+			Key:              entity.Key,
+			Description:      entity.Description,
+			EnvironmentCount: environmentCount,
+			FeatureFlagCount: featureFlagCount,
+			CreatedAt:        entity.CreatedAt,
+		})
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate projects: %w", err)
-	}
+
 	return projects, nil
 }
 
 func (r *ProjectRepository) Create(ctx context.Context, organisationID string, input coreproject.CreateInput) (coreproject.Project, error) {
-	var project coreproject.Project
-	err := r.pool.QueryRow(ctx, `
-		INSERT INTO projects (organisation_id, name, key, description)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id::text, organisation_id::text, name, key, description, created_at
-	`, organisationID, input.Name, input.Key, input.Description).Scan(
-		&project.ID,
-		&project.OrganisationID,
-		&project.Name,
-		&project.Key,
-		&project.Description,
-		&project.CreatedAt,
-	)
+	organisationUUID, err := uuid.Parse(organisationID)
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		return coreproject.Project{}, fmt.Errorf("parse organisation ID: %w", err)
+	}
+
+	entity, err := r.client.Project.Create().
+		SetOrganisationID(organisationUUID).
+		SetName(input.Name).
+		SetKey(input.Key).
+		SetDescription(input.Description).
+		Save(ctx)
+	if err != nil {
+		if flagstackent.IsConstraintError(err) {
 			return coreproject.Project{}, coreproject.ErrKeyConflict
-		}
-		if errors.Is(err, pgx.ErrNoRows) {
-			return coreproject.Project{}, errors.New("project insert returned no row")
 		}
 		return coreproject.Project{}, fmt.Errorf("create project: %w", err)
 	}
-	return project, nil
+
+	return coreproject.Project{
+		ID:             entity.ID.String(),
+		OrganisationID: entity.OrganisationID.String(),
+		Name:           entity.Name,
+		Key:            entity.Key,
+		Description:    entity.Description,
+		CreatedAt:      entity.CreatedAt,
+	}, nil
 }

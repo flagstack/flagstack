@@ -25,6 +25,9 @@ func TestProjectRepositoryIntegration(t *testing.T) {
 	}
 	defer pool.Close()
 
+	entClient := NewEntClient(pool)
+	defer entClient.Close()
+
 	if _, err := pool.Exec(ctx, `TRUNCATE projects, organisations CASCADE`); err != nil {
 		t.Fatalf("reset project tables: %v", err)
 	}
@@ -34,7 +37,7 @@ func TestProjectRepositoryIntegration(t *testing.T) {
 		t.Fatalf("create organisation: %v", err)
 	}
 
-	repository := NewProjectRepository(pool)
+	repository := NewProjectRepository(entClient)
 	created, err := repository.Create(ctx, organisationID, coreproject.CreateInput{
 		Name:        "Web application",
 		Key:         "web-app",
