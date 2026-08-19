@@ -43,6 +43,8 @@ Each flag has a project-level `default_value`. PostgreSQL validates scalar defau
 
 Named `variants` also live on the project-level flag definition. Their values must match the flag kind and are used by environment rules and deterministic allocations. Boolean evaluation additionally reserves built-in `on`, `off`, and `default` variants.
 
+`client_visible` is a project-level delivery attribute. It defaults to false. Server SDK credentials can receive every active flag; client SDK credentials can receive only active flags with `client_visible = true`. Owners and administrators control this exposure because the delivered definition, values, policy and referenced segments must be considered public once a browser/mobile SDK can fetch them.
+
 Environment-specific state lives in `environment_flag_configs`, not in the flag definition itself. A configuration stores:
 
 - whether the flag is enabled in that environment;
@@ -61,6 +63,41 @@ The configuration table references both the environment and flag through organis
 Segments do not contain a synchronized copy of application users. Applications provide evaluation context at runtime; segments describe how those attributes should be matched.
 
 Segments may reference other segments. The application validates references and rejects dependency cycles before persistence.
+
+SDK configuration delivery includes only segments transitively referenced by the flags delivered to that credential. Unrelated segments are omitted from the wire document.
+
+## SDK credentials
+
+`sdk_credentials` are environment-scoped configuration-delivery identities. Each row also carries organisation and project IDs, and PostgreSQL enforces the full organisation/project/environment relationship with a composite foreign key.
+
+Two kinds are supported:
+
+### Server
+
+A server credential stores:
+
+- an immutable UUIDv7 credential ID;
+- display name and environment scope;
+- `kind = 'server'`;
+- a 32-byte SHA-256 digest of the generated high-entropy secret;
+- no client key;
+- optional revocation timestamp.
+
+The full server key is returned only during creation. It is never stored in recoverable form.
+
+### Client
+
+A client credential stores:
+
+- the same tenant/environment identity and metadata;
+- `kind = 'client'`;
+- a unique public client key;
+- no secret digest;
+- optional revocation timestamp.
+
+Client keys are identifiers, not secrets. Their security boundary is the per-flag `client_visible` filter rather than concealment of the key itself.
+
+Database checks ensure a credential cannot simultaneously contain server and client key material.
 
 ## Scheduled changes
 
@@ -87,7 +124,9 @@ Join/configuration entities also have UUIDv7 primary keys. Their logical relatio
 
 ## Lifecycle
 
-Projects, feature flags, and segments support archival rather than immediate destructive deletion in normal product workflows. Foreign keys still use cascading deletion for true tenant/project deletion so a deliberate hard delete cannot leave orphaned configuration.
+Projects, feature flags, and segments support archival rather than immediate destructive deletion in normal product workflows. SDK credentials use explicit revocation: a revoked credential remains visible for operational history but is rejected for configuration authentication.
+
+Foreign keys still use cascading deletion for true tenant/project/environment deletion so a deliberate hard delete cannot leave orphaned configuration or credentials.
 
 `created_at` and `updated_at` are stored as `timestamptz`. Ent provides creation/update defaults while application writes remain explicit and observable.
 
@@ -95,4 +134,4 @@ Projects, feature flags, and segments support archival rather than immediate des
 
 The Ent schema is the source of truth. The explicit migration command applies Ent's automatic PostgreSQL schema migration with destructive column and index drops disabled. PostgreSQL-specific tenant composite foreign keys are reconciled as part of that command so database-level tenant protection remains intact.
 
-See [`evaluation.md`](evaluation.md) for the normative rule, segment, variant, rollout and context-evaluation contract.
+See [`evaluation.md`](evaluation.md) for the normative rule, segment, variant, rollout and context-evaluation contract, and [`sdk-delivery.md`](sdk-delivery.md) for SDK credential and configuration-delivery semantics.

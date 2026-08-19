@@ -23,7 +23,7 @@ Tailwind CSS is the frontend styling foundation. React Router provides declarati
 
 ## Persistence
 
-PostgreSQL 18 is the system of record. Ent schemas under `backend/ent/schema` are the source of truth for users, credentials, sessions, organisations, memberships, projects, environments, feature flags, reusable segments, environment-specific flag configuration, and scheduled flag changes.
+PostgreSQL 18 is the system of record. Ent schemas under `backend/ent/schema` are the source of truth for users, credentials, sessions, organisations, memberships, projects, environments, feature flags, reusable segments, environment-specific flag configuration, scheduled flag changes, and SDK credentials.
 
 The API keeps pgx for native PostgreSQL connectivity and pooling. Ent is layered over that same pgx pool, so the application does not maintain a second database connection pool.
 
@@ -37,7 +37,7 @@ See [`data-model.md`](data-model.md) for persistence and tenancy details.
 
 ## Evaluation boundary
 
-Flag definitions remain project-scoped while enablement and targeting policy remain environment-scoped. The reference evaluator in `backend/internal/evaluation` defines the contract that future SDKs must reproduce locally.
+Flag definitions remain project-scoped while enablement and targeting policy remain environment-scoped. The reference evaluator in `backend/internal/evaluation` defines the contract that SDKs reproduce locally.
 
 The evaluation model supports:
 
@@ -52,6 +52,23 @@ The evaluation model supports:
 Percentage assignment is deterministic and keyed by stable flag/environment identity plus the evaluation subject. This keeps cohorts stable across requests and during progressive rollout increases.
 
 See [`evaluation.md`](evaluation.md) for the normative evaluation and cross-SDK bucketing specification.
+
+## SDK configuration delivery
+
+SDKs do not call FlagStack for every flag evaluation. They download an environment-scoped schema-v1 configuration document and evaluate locally using the same contract as the reference Go evaluator.
+
+Two credential types keep trusted-server and public-client use cases separate:
+
+- `server` credentials contain a high-entropy secret. FlagStack returns the full value once and stores only its digest. Server credentials receive all active flags in their environment.
+- `client` credentials are public identifiers suitable for browser/mobile applications. They receive only flags explicitly marked client-visible.
+
+Client visibility defaults to false and is controlled by organisation owners/admins. This is a security boundary: a client-visible flag's values, variants, targeting rules, rollout configuration and referenced segment definitions must be assumed public.
+
+SDK configuration is served from `/sdk/v1/config` using bearer authentication. Responses use a content-derived ETag and conditional `If-None-Match` requests so polling can cheaply return `304 Not Modified`. The SDK endpoint has a narrow CORS policy for browser clients; the authenticated dashboard/management API remains same-origin.
+
+Realtime transport is intentionally deferred. A future invalidation channel can tell an SDK to perform the same conditional refresh without changing the configuration or evaluation contracts.
+
+See [`sdk-delivery.md`](sdk-delivery.md) for the normative credential and wire-format contract.
 
 ## Scheduling
 
