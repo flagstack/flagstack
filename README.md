@@ -19,28 +19,25 @@ FlagStack is a source-available, self-hostable feature management platform focus
 The repository is organised as a modular monolith:
 
 - **`backend/`** — Go API and core application services.
-- **`frontend/`** — React and TypeScript dashboard built with Vite.
-- **`backend/migrations/`** — PostgreSQL schema migrations.
+- **`frontend/`** — React, TypeScript and Tailwind CSS dashboard built with Vite.
+- **`backend/migrations/`** — PostgreSQL schema migrations managed with Goose.
 - **`.devcontainer/`** — reproducible development environment.
 - **`compose.yml`** — local infrastructure dependencies.
 - **`docs/`** — architecture and development documentation.
 
-See [`docs/architecture.md`](docs/architecture.md) for the initial architecture and package-boundary decisions.
+See [`docs/architecture.md`](docs/architecture.md) for the initial architecture and package-boundary decisions and [`docs/data-model.md`](docs/data-model.md) for the core tenancy model.
 
 ## Development
 
 The recommended development environment is the repository dev container. It includes Go, Node.js, and Docker tooling.
 
-Start PostgreSQL:
+Create the local environment file, install dependencies, start PostgreSQL, and apply migrations:
 
 ```bash
-docker compose up -d postgres
-```
-
-Install frontend dependencies:
-
-```bash
+cp .env.example .env
 make bootstrap
+make infra-up
+make db-up
 ```
 
 Run the API and frontend in separate terminals:
@@ -50,7 +47,7 @@ make dev-backend
 make dev-frontend
 ```
 
-The API listens on `http://localhost:8080` and exposes health endpoints at `/healthz` and `/api/v1/health`. The frontend development server listens on `http://localhost:5173` and proxies `/api` requests to the API.
+The API listens on `http://localhost:8080`. `/healthz` is process liveness, `/readyz` verifies PostgreSQL connectivity, and `/api/v1/health` is the API health endpoint. The frontend development server listens on `http://localhost:5173` and proxies `/api` requests to the API.
 
 Run the current checks with:
 
@@ -58,7 +55,7 @@ Run the current checks with:
 make check
 ```
 
-Copy `.env.example` to `.env` when local configuration overrides are needed. `make dev-backend` loads the file into the backend process when it exists.
+Use `make db-status`, `make db-up`, and `make db-down` to manage schema migrations. Create a migration with `make db-create name=describe_change`.
 
 ## SDKs
 

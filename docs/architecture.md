@@ -5,7 +5,7 @@ FlagStack starts as a modular monolith. That keeps self-hosting straightforward 
 ## Repository layout
 
 - `backend/` — Go API and application logic.
-- `frontend/` — React/TypeScript dashboard built with Vite.
+- `frontend/` — React/TypeScript dashboard built with Vite and Tailwind CSS.
 - `backend/migrations/` — PostgreSQL schema migrations.
 - `.devcontainer/` — reproducible development environment.
 - `compose.yml` — local infrastructure dependencies.
@@ -20,11 +20,17 @@ As domain work lands, dependencies should point inward: transport and persistenc
 
 The dashboard is a client-rendered React application. FlagStack does not currently need server-side rendering, so Vite keeps the frontend build and self-hosted deployment model smaller than a full-stack JavaScript framework.
 
-Routing, server-state management, design-system dependencies, and authentication libraries will be introduced with the workflows that require them rather than pre-selected in the scaffold.
+Tailwind CSS is the frontend styling foundation. Routing, server-state management, and authentication libraries will be introduced with the workflows that require them rather than pre-selected in the scaffold.
 
 ## Persistence
 
-PostgreSQL is the system of record. The first schema migration will define the organisation, membership, project, environment, and feature-flag model together so foreign-key and tenancy boundaries are designed as one coherent unit.
+PostgreSQL is the system of record. The initial schema defines users, organisations, memberships, projects, environments, feature flags, and environment-specific flag configuration as one coherent tenancy model.
+
+The API uses pgx for native PostgreSQL connectivity and connection pooling. Schema changes are versioned as SQL migrations with Goose and are applied explicitly by operators/deployments rather than automatically at API startup.
+
+PostgreSQL readiness is exposed separately from process liveness through `/readyz`.
+
+See [`data-model.md`](data-model.md) for the tenancy and feature-configuration model.
 
 ## Cloud boundary
 

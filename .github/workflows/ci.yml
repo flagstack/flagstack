@@ -37,6 +37,50 @@ jobs:
       - name: Test
         run: go test ./...
 
+  database:
+    name: Database
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: postgres://flagstack:flagstack@localhost:5432/flagstack?sslmode=disable
+      FLAGSTACK_TEST_DATABASE_URL: postgres://flagstack:flagstack@localhost:5432/flagstack?sslmode=disable
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: flagstack
+          POSTGRES_USER: flagstack
+          POSTGRES_PASSWORD: flagstack
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U flagstack -d flagstack"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/go.mod
+
+      - name: Apply migrations
+        run: go run github.com/pressly/goose/v3/cmd/goose@v3.27.3 -dir migrations postgres "$DATABASE_URL" up
+
+      - name: Test database connection
+        run: go test ./internal/database -run TestOpenIntegration -count=1
+
+      - name: Reverse migrations
+        run: go run github.com/pressly/goose/v3/cmd/goose@v3.27.3 -dir migrations postgres "$DATABASE_URL" reset
+
+      - name: Reapply migrations
+        run: go run github.com/pressly/goose/v3/cmd/goose@v3.27.3 -dir migrations postgres "$DATABASE_URL" up
+
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
