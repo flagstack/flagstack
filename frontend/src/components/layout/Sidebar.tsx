@@ -1,10 +1,12 @@
+import { Link, NavLink } from 'react-router'
 import type { OrganisationMembership } from '../../auth/types'
 import { Icon, type IconName } from '../icons'
 
 interface NavigationItem {
   icon: IconName
   label: string
-  href: string
+  to: string
+  end?: boolean
 }
 
 interface NavigationGroup {
@@ -22,15 +24,11 @@ interface SidebarProps {
 const navigation: NavigationGroup[] = [
   {
     label: 'Overview',
-    items: [{ label: 'Dashboard', href: '#dashboard', icon: 'dashboard' }],
+    items: [{ label: 'Dashboard', to: '/', icon: 'dashboard', end: true }],
   },
   {
     label: 'Feature management',
-    items: [
-      { label: 'Projects', href: '#projects', icon: 'project' },
-      { label: 'Feature flags', href: '#feature-flags', icon: 'flag' },
-      { label: 'Environments', href: '#environments', icon: 'environment' },
-    ],
+    items: [{ label: 'Projects', to: '/projects', icon: 'project' }],
   },
 ]
 
@@ -48,10 +46,10 @@ function SidebarContent({
   return (
     <>
       <div className="flex h-16 shrink-0 items-center border-b border-slate-800 px-4">
-        <a
+        <Link
           className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-inherit no-underline"
-          href="#dashboard"
           onClick={onNavigate}
+          to="/"
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-flagstack-600 to-indigo-600 text-xs font-black tracking-tight text-white shadow-lg shadow-violet-950/30 ring-1 ring-flagstack-400/20">
             FS
@@ -62,7 +60,7 @@ function SidebarContent({
               <small className="mt-0.5 block truncate text-xs text-slate-500">Feature management</small>
             </span>
           ) : null}
-        </a>
+        </Link>
         {showCloseButton ? (
           <button
             aria-label="Close navigation"
@@ -84,33 +82,36 @@ function SidebarContent({
               </p>
             ) : null}
             <div className="space-y-1">
-              {group.items.map((item) => {
-                const active = item.href === '#dashboard'
-                return (
-                  <a
-                    aria-current={active ? 'page' : undefined}
-                    className={`group flex h-10 items-center rounded-lg text-sm font-medium transition ${
+              {group.items.map((item) => (
+                <NavLink
+                  className={({ isActive }) =>
+                    `group flex h-10 items-center rounded-lg text-sm font-medium transition ${
                       collapsed ? 'justify-center px-0' : 'gap-3 px-3'
                     } ${
-                      active
+                      isActive
                         ? 'bg-slate-800 text-white shadow-inner shadow-black/20'
                         : 'text-slate-400 hover:bg-slate-900 hover:text-slate-100'
-                    }`}
-                    href={item.href}
-                    key={item.label}
-                    onClick={onNavigate}
-                    title={collapsed ? item.label : undefined}
-                  >
-                    <Icon
-                      className={`shrink-0 ${
-                        active ? 'text-flagstack-400' : 'text-slate-500 group-hover:text-slate-300'
-                      }`}
-                      name={item.icon}
-                    />
-                    {!collapsed ? <span className="truncate">{item.label}</span> : null}
-                  </a>
-                )
-              })}
+                    }`
+                  }
+                  end={item.end}
+                  key={item.label}
+                  onClick={onNavigate}
+                  title={collapsed ? item.label : undefined}
+                  to={item.to}
+                >
+                  {({ isActive }) => (
+                    <>
+                      <Icon
+                        className={`shrink-0 ${
+                          isActive ? 'text-flagstack-400' : 'text-slate-500 group-hover:text-slate-300'
+                        }`}
+                        name={item.icon}
+                      />
+                      {!collapsed ? <span className="truncate">{item.label}</span> : null}
+                    </>
+                  )}
+                </NavLink>
+              ))}
             </div>
           </div>
         ))}
