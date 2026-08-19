@@ -1,6 +1,6 @@
 # FlagStack
 
-FlagStack is an open-source, self-hostable feature management platform focused on a strong developer experience, predictable infrastructure, and avoiding architecture-based pricing surprises.
+FlagStack is a source-available, self-hostable feature management platform focused on a strong developer experience, predictable infrastructure, and avoiding architecture-based pricing surprises.
 
 > **Status:** Early development. FlagStack is not yet ready for production use.
 
@@ -16,7 +16,7 @@ FlagStack is an open-source, self-hostable feature management platform focused o
 
 ## Repository
 
-This repository will contain the main open-source FlagStack application, including:
+This repository will contain the main FlagStack application, including:
 
 - **Backend** — Go API and core services.
 - **Frontend** — web dashboard for managing organisations, projects, environments and feature flags.
@@ -43,10 +43,18 @@ The core FlagStack product is intended to remain genuinely useful when self-host
 
 Cloud-specific services such as billing, provisioning and internal operations are maintained separately from the public core.
 
+The Elastic License 2.0 permits self-hosting and modification while restricting use of FlagStack itself as a competing hosted or managed service. See `LICENSE` for details and the authoritative licence terms.
+
 ## Contributing
 
-FlagStack is at a very early stage. Contribution documentation, development setup instructions and project conventions will be added as the initial architecture settles.
+Contributions are welcome. Organisation-wide contribution guidelines, commit conventions, security policy, governance, and pull request requirements are maintained in the [`flagstack/.github`](https://github.com/flagstack/.github) repository.
 
-## License
+FlagStack maintains a linear Git history. Pull requests are integrated by **rebase only**; merge commits and squash merges are not used.
 
-A project license will be selected before the first public release.
+External contributions are subject to the FlagStack Contributor Licence Agreement policy.
+
+## Licence
+
+FlagStack core is licensed under the **Elastic License 2.0 (ELv2)**. See [`LICENSE`](LICENSE).
+
+The official client SDKs are licensed separately under the Apache License 2.0.
