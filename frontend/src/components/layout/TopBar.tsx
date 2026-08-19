@@ -53,10 +53,8 @@ export function TopBar({ collapsed, onOpenMobileNavigation, onToggleSidebar }: T
           <div className="account-popover">
             <div className="account-popover-heading">
               <strong>Local admin</strong>
-              <span>Authentication will replace this development identity.</span>
+              <span>Authentication and account controls will replace this development identity in a focused follow-up.</span>
             </div>
-            <a href="#members">Members & access</a>
-            <a href="#settings">Organisation settings</a>
           </div>
         </details>
       </div>

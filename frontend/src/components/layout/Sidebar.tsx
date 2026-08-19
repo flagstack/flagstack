@@ -30,17 +30,6 @@ const navigation: NavigationGroup[] = [
       { label: 'Environments', href: '#environments', icon: 'environment' },
     ],
   },
-  {
-    label: 'Access',
-    items: [
-      { label: 'Members', href: '#members', icon: 'users' },
-      { label: 'API keys', href: '#api-keys', icon: 'key' },
-    ],
-  },
-  {
-    label: 'Administration',
-    items: [{ label: 'Settings', href: '#settings', icon: 'settings' }],
-  },
 ]
 
 function SidebarContent({
