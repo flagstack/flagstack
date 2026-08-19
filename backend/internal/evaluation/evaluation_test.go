@@ -95,7 +95,7 @@ func TestEvaluateReusableSegments(t *testing.T) {
 	}}
 
 	result := Evaluate(flag, Context{Attributes: map[string]any{
-		"plan": "enterprise",
+		"plan":    "enterprise",
 		"account": map[string]any{"active": true},
 	}}, segments)
 	if string(result.Value) != "true" || result.RuleID != "premium" {
@@ -240,10 +240,10 @@ func TestEvaluateDetectsSegmentCycles(t *testing.T) {
 	flag := booleanFlag()
 	flag.Enabled = true
 	flag.Policy.Rules = []Rule{{
-		ID:    "segment-rule",
-		Match: MatchAll,
+		ID:         "segment-rule",
+		Match:      MatchAll,
 		Conditions: []Condition{{Operator: OperatorInSegment, Value: raw(`"a"`)}},
-		Outcome: Outcome{Variant: "on"},
+		Outcome:    Outcome{Variant: "on"},
 	}}
 
 	segments := []Segment{
