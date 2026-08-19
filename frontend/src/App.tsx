@@ -76,6 +76,11 @@ export function App() {
     return <LoginPage onAuthenticated={(principal) => setState({ status: 'authenticated', principal })} />
   }
 
+  const organisation = state.principal.organisations[0]
+  if (!organisation) {
+    return <StartupScreen message="Your account is not a member of an organisation." />
+  }
+
   async function logout() {
     await apiRequest<void>('/api/v1/auth/logout', { method: 'POST' })
     setState({ status: 'login' })
@@ -83,7 +88,7 @@ export function App() {
 
   return (
     <AppShell onLogout={logout} principal={state.principal}>
-      <DashboardPage />
+      <DashboardPage organisation={organisation} />
     </AppShell>
   )
 }
