@@ -26,11 +26,14 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	}
 	defer pool.Close()
 
+	entClient := database.NewEntClient(pool)
+	defer entClient.Close()
+
 	authService, err := auth.NewService(database.NewAuthRepository(pool), cfg.SessionTTL)
 	if err != nil {
 		return fmt.Errorf("create auth service: %w", err)
 	}
-	projectService, err := project.NewService(database.NewProjectRepository(pool))
+	projectService, err := project.NewService(database.NewProjectRepository(entClient))
 	if err != nil {
 		return fmt.Errorf("create project service: %w", err)
 	}
