@@ -81,6 +81,7 @@ func NewRouterWithServices(logger *slog.Logger, readiness readinessChecker, serv
 			segmentsPath := projectBase + "/segments"
 			schedulesPath := projectBase + "/scheduled-flag-changes"
 
+			mux.Handle("GET "+flagBase+"/targeting", authHandlers.requireAuth(http.HandlerFunc(targetingHandlers.getFlagTargeting)))
 			mux.Handle("PUT "+flagBase+"/variants", authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(targetingHandlers.setVariants))))
 			mux.Handle("PUT "+environmentFlagBase+"/policy", authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(targetingHandlers.setPolicy))))
 			mux.Handle("POST "+environmentFlagBase+"/preview", authHandlers.requireAuth(http.HandlerFunc(targetingHandlers.preview)))
