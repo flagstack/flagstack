@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router'
 import type { OrganisationMembership } from '../auth/types'
 import { Icon } from '../components/icons'
 import { CreateProjectForm } from '../components/projects/CreateProjectForm'
@@ -172,13 +173,17 @@ export function DashboardPage({ organisation }: DashboardPageProps) {
             ) : (
               <div className="divide-y divide-slate-800">
                 {projects.map((project) => (
-                  <div className="flex items-center gap-4 px-5 py-4" key={project.id}>
+                  <Link
+                    className="group flex items-center gap-4 px-5 py-4 transition hover:bg-slate-800/35"
+                    key={project.id}
+                    to={`/projects/${project.key}`}
+                  >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-flagstack-500/10 text-flagstack-400">
                       <Icon name="project" size={17} />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <strong className="truncate text-sm font-medium text-slate-200">{project.name}</strong>
+                        <strong className="truncate text-sm font-medium text-slate-200 group-hover:text-white">{project.name}</strong>
                         <code className="rounded bg-slate-950 px-1.5 py-0.5 text-[10px] text-slate-500">{project.key}</code>
                       </div>
                       <p className="mt-1 truncate text-xs text-slate-600">
@@ -194,8 +199,9 @@ export function DashboardPage({ organisation }: DashboardPageProps) {
                         <strong className="block text-xs font-semibold text-slate-300">{project.feature_flag_count}</strong>
                         <span className="text-[10px] text-slate-600">flags</span>
                       </div>
+                      <Icon className="text-slate-700 transition group-hover:translate-x-0.5 group-hover:text-slate-400" name="chevron-right" size={15} />
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
@@ -243,7 +249,7 @@ export function DashboardPage({ organisation }: DashboardPageProps) {
                   <strong className="text-sm font-medium text-slate-300">
                     {featureFlagCount === 0 ? 'No flags configured' : `${featureFlagCount} feature flags`}
                   </strong>
-                  <p className="mt-0.5 truncate text-xs text-slate-600">Flag management is the next project workflow to land.</p>
+                  <p className="mt-0.5 truncate text-xs text-slate-600">Open a project to create flags and control them per environment.</p>
                 </div>
               </div>
             </div>
