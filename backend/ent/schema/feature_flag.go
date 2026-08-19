@@ -26,6 +26,7 @@ func (FeatureFlag) Fields() []ent.Field {
 		field.String("kind").NotEmpty().Immutable(),
 		field.JSON("default_value", json.RawMessage{}),
 		field.JSON("variants", []evaluation.Variant{}).Optional(),
+		field.Bool("client_visible").Default(false),
 		field.Time("archived_at").Optional().Nillable(),
 		createdAtField(), updatedAtField(),
 	}

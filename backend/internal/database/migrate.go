@@ -141,6 +141,13 @@ func ensureTenantConstraints(ctx context.Context, pool *pgxpool.Pool) error {
 				FOREIGN KEY (organisation_id, project_id, feature_flag_id)
 				REFERENCES feature_flags (organisation_id, project_id, id) ON DELETE CASCADE`,
 		},
+		{
+			name: "sdk_credentials_environment_tenant_fkey",
+			sql: `ALTER TABLE sdk_credentials
+				ADD CONSTRAINT sdk_credentials_environment_tenant_fkey
+				FOREIGN KEY (organisation_id, project_id, environment_id)
+				REFERENCES environments (organisation_id, project_id, id) ON DELETE CASCADE`,
+		},
 	}
 
 	for _, statement := range statements {

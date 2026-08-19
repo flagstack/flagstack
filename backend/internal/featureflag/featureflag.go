@@ -28,6 +28,7 @@ type FeatureFlag struct {
 	Description    string
 	Kind           string
 	DefaultValue   json.RawMessage
+	ClientVisible  bool
 	CreatedAt      time.Time
 }
 
