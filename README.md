@@ -58,7 +58,7 @@ Run the current checks with:
 make check
 ```
 
-Copy `.env.example` to `.env` when local configuration overrides are needed.
+Copy `.env.example` to `.env` when local configuration overrides are needed. `make dev-backend` loads the file into the backend process when it exists.
 
 ## SDKs
 

@@ -6,7 +6,7 @@ bootstrap:
 	cd frontend && corepack enable && corepack prepare pnpm@11.22.0 --activate && pnpm install
 
 dev-backend:
-	cd backend && go run ./cmd/flagstack
+	cd backend && set -a && if [ -f ../.env ]; then source ../.env; fi && set +a && go run ./cmd/flagstack
 
 dev-frontend:
 	cd frontend && pnpm dev
