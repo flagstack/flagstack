@@ -1,6 +1,6 @@
 # Core data model
 
-FlagStack's persistence model establishes identity, tenancy, and the project/environment/flag hierarchy while leaving targeting and SDK evaluation features room to grow.
+FlagStack's persistence model establishes identity, tenancy, and the project/environment/flag hierarchy while keeping evaluation configuration local to those boundaries.
 
 ## Identity and organisations
 
@@ -32,7 +32,7 @@ Nested tables also carry `organisation_id`. PostgreSQL composite foreign keys en
 
 A `feature_flag` is defined at project scope. Its stable key is unique within that project.
 
-The initial kinds are:
+The supported kinds are:
 
 - `boolean`
 - `string`
@@ -41,15 +41,43 @@ The initial kinds are:
 
 Each flag has a project-level `default_value`. PostgreSQL validates scalar default values against the declared kind.
 
-Environment-specific state lives in `environment_flag_configs`, not in the flag definition itself. A configuration currently stores:
+Named `variants` also live on the project-level flag definition. Their values must match the flag kind and are used by environment rules and deterministic allocations. Boolean evaluation additionally reserves built-in `on`, `off`, and `default` variants.
+
+Environment-specific state lives in `environment_flag_configs`, not in the flag definition itself. A configuration stores:
 
 - whether the flag is enabled in that environment;
 - an optional environment-specific value, falling back to the flag default when absent;
-- a monotonically increasing revision number for future configuration delivery and audit semantics.
+- an evaluation `policy` containing ordered targeting rules and the fallthrough outcome;
+- a monotonically increasing revision number for configuration delivery and audit semantics.
+
+Environment configuration remains sparse. A missing `(environment, flag)` row means disabled with the project-level default. A row is created only when environment state or targeting policy needs to be persisted.
 
 The configuration table references both the environment and flag through organisation/project-aware foreign keys. This guarantees that an environment can never be configured with a flag from another project or tenant.
 
-Targeting rules, variants, percentage rollout, segments, SDK credentials, and audit history can extend this model without changing the core tenancy hierarchy.
+## Segments
+
+`segments` are reusable project-scoped targeting definitions. A segment stores a stable key, display metadata, `all`/`any` matching semantics, and typed condition JSON using the same operators as flag rules.
+
+Segments do not contain a synchronized copy of application users. Applications provide evaluation context at runtime; segments describe how those attributes should be matched.
+
+Segments may reference other segments. The application validates references and rejects dependency cycles before persistence.
+
+## Scheduled changes
+
+`scheduled_flag_changes` stores durable future control-plane operations for a particular project, environment and feature flag.
+
+A scheduled change contains:
+
+- `execute_at` as an absolute `timestamptz`;
+- a JSON patch that changes enablement and/or environment policy;
+- lifecycle status (`pending`, `running`, `executed`, `cancelled`, or `failed`);
+- optional creator identity;
+- an execution claim token and claim timestamp;
+- execution timestamp and failure detail.
+
+Due work is claimed conditionally in PostgreSQL. Claims have a bounded lease, allowing another FlagStack replica to reclaim work left `running` when a process dies. The claim token prevents the stale worker from later committing the same scheduled change.
+
+Multiple scheduled policy patches can implement a progressive rollout without adding scheduler-specific evaluation behaviour.
 
 ## Identifiers
 
@@ -59,10 +87,12 @@ Join/configuration entities also have UUIDv7 primary keys. Their logical relatio
 
 ## Lifecycle
 
-Projects and feature flags support archival rather than immediate destructive deletion in normal product workflows. Foreign keys still use cascading deletion for true tenant/project deletion so a deliberate hard delete cannot leave orphaned configuration.
+Projects, feature flags, and segments support archival rather than immediate destructive deletion in normal product workflows. Foreign keys still use cascading deletion for true tenant/project deletion so a deliberate hard delete cannot leave orphaned configuration.
 
 `created_at` and `updated_at` are stored as `timestamptz`. Ent provides creation/update defaults while application writes remain explicit and observable.
 
 ## Schema ownership
 
 The Ent schema is the source of truth. The explicit migration command applies Ent's automatic PostgreSQL schema migration with destructive column and index drops disabled. PostgreSQL-specific tenant composite foreign keys are reconciled as part of that command so database-level tenant protection remains intact.
+
+See [`evaluation.md`](evaluation.md) for the normative rule, segment, variant, rollout and context-evaluation contract.
