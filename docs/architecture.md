@@ -19,11 +19,11 @@ As domain work lands, dependencies should point inward: transport and persistenc
 
 The dashboard is a client-rendered React application. FlagStack does not currently need server-side rendering, so Vite keeps the frontend build and self-hosted deployment model smaller than a full-stack JavaScript framework.
 
-Tailwind CSS is the frontend styling foundation. Routing, server-state management, and authentication libraries will be introduced with the workflows that require them rather than pre-selected in the scaffold.
+Tailwind CSS is the frontend styling foundation. React Router provides declarative application routing; additional frontend dependencies are introduced only when a product workflow justifies them.
 
 ## Persistence
 
-PostgreSQL 18 is the system of record. Ent schemas under `backend/ent/schema` are the source of truth for users, credentials, sessions, organisations, memberships, projects, environments, feature flags, and environment-specific flag configuration.
+PostgreSQL 18 is the system of record. Ent schemas under `backend/ent/schema` are the source of truth for users, credentials, sessions, organisations, memberships, projects, environments, feature flags, reusable segments, environment-specific flag configuration, and scheduled flag changes.
 
 The API keeps pgx for native PostgreSQL connectivity and pooling. Ent is layered over that same pgx pool, so the application does not maintain a second database connection pool.
 
@@ -33,7 +33,33 @@ A small PostgreSQL-specific migration reconciler preserves the organisation/proj
 
 PostgreSQL readiness is exposed separately from process liveness through `/readyz`.
 
-See [`data-model.md`](data-model.md) for the tenancy and feature-configuration model.
+See [`data-model.md`](data-model.md) for persistence and tenancy details.
+
+## Evaluation boundary
+
+Flag definitions remain project-scoped while enablement and targeting policy remain environment-scoped. The reference evaluator in `backend/internal/evaluation` defines the contract that future SDKs must reproduce locally.
+
+The evaluation model supports:
+
+- boolean, string, number and JSON values;
+- named variants;
+- ordered first-match targeting rules;
+- arbitrary application-supplied evaluation context;
+- reusable project segments;
+- deterministic percentage and multivariate rollout;
+- OpenFeature-style resolution metadata and safe fallback behaviour.
+
+Percentage assignment is deterministic and keyed by stable flag/environment identity plus the evaluation subject. This keeps cohorts stable across requests and during progressive rollout increases.
+
+See [`evaluation.md`](evaluation.md) for the normative evaluation and cross-SDK bucketing specification.
+
+## Scheduling
+
+Scheduled flag changes are a control-plane concern. Each API replica runs a small scheduler loop and competes for due work through conditional PostgreSQL claims; no Redis, message broker, or separate worker dependency is required for the initial implementation.
+
+Claims use a bounded lease. A replica that dies after claiming a change cannot strand it indefinitely: another replica may reclaim the work after the lease expires. Applying a claimed change revalidates the current environment, active flag, variants, segments, and policy before writing a new configuration revision.
+
+Schedules can change enablement or apply a targeting policy. Multiple future policy changes can therefore implement progressive rollout schedules without adding special evaluation semantics.
 
 ## Cloud boundary
 
