@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import type { OrganisationMembership } from '../auth/types'
 import { CreateEnvironmentForm } from '../components/environments/CreateEnvironmentForm'
+import { CreateFeatureFlagForm } from '../components/feature-flags/CreateFeatureFlagForm'
 import { Icon } from '../components/icons'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { PageHeader } from '../components/ui/PageHeader'
 import type { Environment, EnvironmentListResponse } from '../environment/types'
+import type { FeatureFlag, FeatureFlagListResponse } from '../featureflag/types'
+import type { FlagConfig, FlagConfigListResponse } from '../flagconfig/types'
 import { APIError, apiRequest } from '../lib/api'
 import type { Project, ProjectListResponse } from '../project/types'
 
@@ -17,9 +20,14 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
   const { projectKey } = useParams<{ projectKey: string }>()
   const [project, setProject] = useState<Project>()
   const [environments, setEnvironments] = useState<Environment[]>([])
+  const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([])
+  const [flagConfigs, setFlagConfigs] = useState<FlagConfig[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>()
+  const [actionError, setActionError] = useState<string>()
   const [creatingEnvironment, setCreatingEnvironment] = useState(false)
+  const [creatingFeatureFlag, setCreatingFeatureFlag] = useState(false)
+  const [updatingConfig, setUpdatingConfig] = useState<string>()
 
   useEffect(() => {
     let cancelled = false
@@ -35,12 +43,18 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
           throw new APIError(404, 'project_not_found', 'Project was not found.')
         }
 
-        const environmentResponse = await apiRequest<EnvironmentListResponse>(
-          `/api/v1/organisations/${encodeURIComponent(organisation.slug)}/projects/${encodeURIComponent(selected.id)}/environments`,
-        )
+        const projectPath = `/api/v1/organisations/${encodeURIComponent(organisation.slug)}/projects/${encodeURIComponent(selected.id)}`
+        const [environmentResponse, featureFlagResponse, flagConfigResponse] = await Promise.all([
+          apiRequest<EnvironmentListResponse>(`${projectPath}/environments`),
+          apiRequest<FeatureFlagListResponse>(`${projectPath}/feature-flags`),
+          apiRequest<FlagConfigListResponse>(`${projectPath}/flag-configs`),
+        ])
+
         if (!cancelled) {
           setProject(selected)
           setEnvironments(environmentResponse.environments)
+          setFeatureFlags(featureFlagResponse.feature_flags)
+          setFlagConfigs(flagConfigResponse.configs)
         }
       })
       .catch((requestError) => {
@@ -67,7 +81,38 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
     return <ProjectState message={error ?? 'Project was not found.'} />
   }
 
-  const canManageEnvironments = organisation.role !== 'viewer'
+  const canManage = organisation.role !== 'viewer'
+
+  async function setFlagEnabled(environmentID: string, featureFlagID: string, enabled: boolean) {
+    if (!project) {
+      return
+    }
+
+    const configKey = `${environmentID}:${featureFlagID}`
+    setUpdatingConfig(configKey)
+    setActionError(undefined)
+
+    try {
+      const config = await apiRequest<FlagConfig>(
+        `/api/v1/organisations/${encodeURIComponent(organisation.slug)}/projects/${encodeURIComponent(project.id)}/environments/${encodeURIComponent(environmentID)}/feature-flags/${encodeURIComponent(featureFlagID)}`,
+        { method: 'PUT', body: JSON.stringify({ enabled }) },
+      )
+
+      setFlagConfigs((current) => {
+        const existingIndex = current.findIndex(
+          (candidate) => candidate.environment_id === environmentID && candidate.feature_flag_id === featureFlagID,
+        )
+        if (existingIndex === -1) {
+          return [...current, config]
+        }
+        return current.map((candidate, index) => (index === existingIndex ? config : candidate))
+      })
+    } catch (requestError) {
+      setActionError(requestError instanceof APIError ? requestError.message : 'Feature flag state could not be updated.')
+    } finally {
+      setUpdatingConfig(undefined)
+    }
+  }
 
   return (
     <div className="mx-auto w-full max-w-[100rem] px-4 py-6 lg:px-6 lg:py-8">
@@ -96,7 +141,7 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
               <CardTitle>Environments</CardTitle>
               <p className="mt-1 text-xs text-slate-500">Independent delivery and configuration boundaries for this project.</p>
             </div>
-            {canManageEnvironments ? (
+            {canManage ? (
               <button
                 className="rounded-lg bg-flagstack-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-flagstack-500"
                 onClick={() => setCreatingEnvironment((value) => !value)}
@@ -159,33 +204,138 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
           </CardHeader>
           <CardContent className="divide-y divide-slate-800">
             <OverviewRow icon="environment" label="Environments" value={String(environments.length)} />
-            <OverviewRow icon="flag" label="Feature flags" value={String(project.feature_flag_count)} />
+            <OverviewRow icon="flag" label="Feature flags" value={String(featureFlags.length)} />
             <OverviewRow icon="key" label="SDK keys" value="0" />
           </CardContent>
         </Card>
       </div>
 
       <Card className="mt-4">
-        <CardHeader className="border-b border-slate-800">
-          <CardTitle>Feature flags</CardTitle>
-          <p className="mt-1 text-xs text-slate-500">Project-scoped definitions with per-environment configuration.</p>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3 px-5 py-5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-flagstack-500/10 text-flagstack-400">
-              <Icon name="flag" size={17} />
-            </span>
-            <div>
-              <strong className="text-sm font-medium text-slate-300">
-                {project.feature_flag_count === 0 ? 'No feature flags yet' : `${project.feature_flag_count} active flags`}
-              </strong>
-              <p className="mt-1 text-xs text-slate-600">Feature-flag creation and environment configuration is the next workflow.</p>
-            </div>
+        <CardHeader className="flex items-start justify-between gap-4 border-b border-slate-800">
+          <div>
+            <CardTitle>Feature flags</CardTitle>
+            <p className="mt-1 text-xs text-slate-500">Project definitions with independent enablement in each environment.</p>
           </div>
+          {canManage ? (
+            <button
+              className="rounded-lg bg-flagstack-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-flagstack-500"
+              onClick={() => setCreatingFeatureFlag((value) => !value)}
+              type="button"
+            >
+              {creatingFeatureFlag ? 'Close' : 'Create feature flag'}
+            </button>
+          ) : null}
+        </CardHeader>
+
+        {creatingFeatureFlag ? (
+          <CreateFeatureFlagForm
+            onCancel={() => setCreatingFeatureFlag(false)}
+            onCreated={(featureFlag) => {
+              setFeatureFlags((current) => [...current, featureFlag])
+              setProject((current) => current ? { ...current, feature_flag_count: current.feature_flag_count + 1 } : current)
+              setCreatingFeatureFlag(false)
+            }}
+            organisation={organisation}
+            projectID={project.id}
+          />
+        ) : null}
+
+        <CardContent className="min-h-52">
+          {actionError ? (
+            <div className="m-5 rounded-lg border border-red-900/60 bg-red-950/30 px-3 py-2.5 text-xs leading-5 text-red-300">
+              {actionError}
+            </div>
+          ) : null}
+
+          {featureFlags.length === 0 ? (
+            <div className="flex min-h-52 flex-col items-center justify-center px-5 py-8 text-center">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-flagstack-500/10 text-flagstack-400">
+                <Icon name="flag" size={20} />
+              </span>
+              <strong className="mt-3 text-sm font-medium text-slate-300">No feature flags yet</strong>
+              <p className="mt-1 max-w-md text-xs leading-5 text-slate-600">
+                Create a flag once, then control whether it is enabled independently in every environment.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-800">
+              {featureFlags.map((featureFlag) => (
+                <div className="px-5 py-4" key={featureFlag.id}>
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="flex min-w-0 gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-flagstack-500/10 text-flagstack-400">
+                        <Icon name="flag" size={17} />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <strong className="text-sm font-medium text-slate-200">{featureFlag.name}</strong>
+                          <code className="rounded bg-slate-950 px-1.5 py-0.5 text-[10px] text-slate-500">{featureFlag.key}</code>
+                          <span className="rounded border border-slate-800 bg-slate-950/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                            {featureFlag.kind}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-600">{featureFlag.description || 'No description'}</p>
+                        <p className="mt-2 text-[11px] text-slate-500">
+                          Default: <code className="text-slate-400">{formatDefaultValue(featureFlag.default_value)}</code>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="min-w-0 lg:max-w-[55%]">
+                      {environments.length === 0 ? (
+                        <span className="text-xs text-slate-600">Create an environment to control delivery.</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {environments.map((environment) => {
+                            const config = flagConfigs.find(
+                              (candidate) => candidate.environment_id === environment.id && candidate.feature_flag_id === featureFlag.id,
+                            )
+                            const enabled = config?.enabled ?? false
+                            const configKey = `${environment.id}:${featureFlag.id}`
+                            const updating = updatingConfig === configKey
+
+                            return (
+                              <button
+                                aria-pressed={enabled}
+                                className={`inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                  enabled
+                                    ? 'border-emerald-800/80 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-950/60'
+                                    : 'border-slate-800 bg-slate-950/60 text-slate-500 hover:border-slate-700 hover:text-slate-300'
+                                }`}
+                                disabled={!canManage || updating}
+                                key={environment.id}
+                                onClick={() => void setFlagEnabled(environment.id, featureFlag.id, !enabled)}
+                                title={canManage ? `Turn ${featureFlag.name} ${enabled ? 'off' : 'on'} in ${environment.name}` : 'Viewer access is read-only'}
+                                type="button"
+                              >
+                                <span className={`h-1.5 w-1.5 rounded-full ${enabled ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                                <span className="max-w-36 truncate">{environment.name}</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                                  {updating ? '…' : enabled ? 'On' : 'Off'}
+                                </span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   )
+}
+
+function formatDefaultValue(value: unknown): string {
+  if (typeof value === 'string') {
+    return JSON.stringify(value)
+  }
+  const serialized = JSON.stringify(value)
+  return serialized ?? String(value)
 }
 
 function OverviewRow({ icon, label, value }: { icon: 'environment' | 'flag' | 'key'; label: string; value: string }) {
