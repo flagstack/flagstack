@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	entschema "entgo.io/ent/dialect/sql/schema"
 	flagstackent "github.com/flagstack/flagstack/backend/ent"
+	flagstackmigrate "github.com/flagstack/flagstack/backend/ent/migrate"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,10 +16,9 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool, client *flagstackent.Clien
 
 	if err := client.Schema.Create(
 		ctx,
-		entschema.WithAtlas(true),
-		entschema.WithDropColumn(false),
-		entschema.WithDropIndex(false),
-		entschema.WithForeignKeys(true),
+		flagstackmigrate.WithDropColumn(false),
+		flagstackmigrate.WithDropIndex(false),
+		flagstackmigrate.WithForeignKeys(true),
 	); err != nil {
 		return fmt.Errorf("apply Ent schema migration: %w", err)
 	}
