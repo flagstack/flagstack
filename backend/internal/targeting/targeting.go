@@ -281,21 +281,23 @@ func (s *Service) RunDueScheduledChanges(ctx context.Context, limit int) (int, e
 }
 
 func (s *Service) validateClaimedChange(ctx context.Context, change ScheduledChange) error {
+	flag, segments, err := s.repository.LoadEvaluation(
+		ctx,
+		change.OrganisationID,
+		change.ProjectID,
+		change.EnvironmentID,
+		change.FeatureFlagID,
+	)
+	if err != nil {
+		return err
+	}
 	if change.Patch.Policy == nil {
 		return nil
 	}
-	state, err := s.repository.GetFlagState(ctx, change.OrganisationID, change.ProjectID, change.FeatureFlagID)
-	if err != nil {
+	if err := evaluation.ValidateDefinition(flag.Kind, flag.DefaultValue, flag.Variants, *change.Patch.Policy); err != nil {
 		return err
 	}
-	if err := evaluation.ValidateDefinition(state.Kind, state.DefaultValue, state.Variants, *change.Patch.Policy); err != nil {
-		return err
-	}
-	segments, err := s.repository.ListSegments(ctx, change.OrganisationID, change.ProjectID)
-	if err != nil {
-		return err
-	}
-	return evaluation.ValidatePolicySegments(*change.Patch.Policy, evaluationSegments(segments))
+	return evaluation.ValidatePolicySegments(*change.Patch.Policy, segments)
 }
 
 type ValidationError struct {

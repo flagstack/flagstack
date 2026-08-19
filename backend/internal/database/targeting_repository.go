@@ -20,6 +20,8 @@ import (
 	"github.com/google/uuid"
 )
 
+const scheduleClaimLease = 2 * time.Minute
+
 type TargetingRepository struct {
 	client *flagstackent.Client
 }
@@ -361,10 +363,22 @@ func (r *TargetingRepository) CancelScheduledChange(ctx context.Context, organis
 }
 
 func (r *TargetingRepository) ClaimDueScheduledChanges(ctx context.Context, now time.Time, limit int) ([]coretargeting.ScheduledChange, error) {
-	entities, err := r.client.ScheduledFlagChange.Query().Where(
-		entscheduledflagchange.StatusEQ("pending"),
-		entscheduledflagchange.ExecuteAtLTE(now),
-	).Order(flagstackent.Asc(entscheduledflagchange.FieldExecuteAt), flagstackent.Asc(entscheduledflagchange.FieldID)).Limit(limit).All(ctx)
+	staleBefore := now.Add(-scheduleClaimLease)
+	eligible := entscheduledflagchange.Or(
+		entscheduledflagchange.And(
+			entscheduledflagchange.StatusEQ("pending"),
+			entscheduledflagchange.ExecuteAtLTE(now),
+		),
+		entscheduledflagchange.And(
+			entscheduledflagchange.StatusEQ("running"),
+			entscheduledflagchange.ClaimedAtNotNil(),
+			entscheduledflagchange.ClaimedAtLTE(staleBefore),
+		),
+	)
+	entities, err := r.client.ScheduledFlagChange.Query().Where(eligible).
+		Order(flagstackent.Asc(entscheduledflagchange.FieldExecuteAt), flagstackent.Asc(entscheduledflagchange.FieldID)).
+		Limit(limit).
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list due scheduled flag changes: %w", err)
 	}
@@ -374,8 +388,17 @@ func (r *TargetingRepository) ClaimDueScheduledChanges(ctx context.Context, now 
 		token := uuid.New()
 		count, err := r.client.ScheduledFlagChange.Update().Where(
 			entscheduledflagchange.ID(entity.ID),
-			entscheduledflagchange.StatusEQ("pending"),
-			entscheduledflagchange.ExecuteAtLTE(now),
+			entscheduledflagchange.Or(
+				entscheduledflagchange.And(
+					entscheduledflagchange.StatusEQ("pending"),
+					entscheduledflagchange.ExecuteAtLTE(now),
+				),
+				entscheduledflagchange.And(
+					entscheduledflagchange.StatusEQ("running"),
+					entscheduledflagchange.ClaimedAtNotNil(),
+					entscheduledflagchange.ClaimedAtLTE(staleBefore),
+				),
+			),
 		).SetStatus("running").SetClaimToken(token).SetClaimedAt(now).Save(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("claim scheduled flag change: %w", err)
