@@ -10,6 +10,7 @@ import (
 	corefeatureflag "github.com/flagstack/flagstack/backend/internal/featureflag"
 	coreflagconfig "github.com/flagstack/flagstack/backend/internal/flagconfig"
 	coreproject "github.com/flagstack/flagstack/backend/internal/project"
+	coretargeting "github.com/flagstack/flagstack/backend/internal/targeting"
 )
 
 type readinessChecker interface {
@@ -22,6 +23,7 @@ type Services struct {
 	Environments *coreenvironment.Service
 	FeatureFlags *corefeatureflag.Service
 	FlagConfigs  *coreflagconfig.Service
+	Targeting    *coretargeting.Service
 }
 
 func NewRouter(logger *slog.Logger, readiness readinessChecker, authService *coreauth.Service, authOptions AuthOptions) http.Handler {
@@ -69,6 +71,25 @@ func NewRouterWithServices(logger *slog.Logger, readiness readinessChecker, serv
 			flagConfigPath := "/api/v1/organisations/{organisation}/projects/{project}/environments/{environment}/feature-flags/{featureFlag}"
 			mux.Handle("GET "+flagConfigsPath, authHandlers.requireAuth(http.HandlerFunc(flagConfigHandlers.list)))
 			mux.Handle("PUT "+flagConfigPath, authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(flagConfigHandlers.setEnabled))))
+		}
+
+		if services.Targeting != nil {
+			targetingHandlers := newTargetingHandlers(services.Targeting)
+			projectBase := "/api/v1/organisations/{organisation}/projects/{project}"
+			flagBase := projectBase + "/feature-flags/{featureFlag}"
+			environmentFlagBase := projectBase + "/environments/{environment}/feature-flags/{featureFlag}"
+			segmentsPath := projectBase + "/segments"
+			schedulesPath := projectBase + "/scheduled-flag-changes"
+
+			mux.Handle("PUT "+flagBase+"/variants", authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(targetingHandlers.setVariants))))
+			mux.Handle("PUT "+environmentFlagBase+"/policy", authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(targetingHandlers.setPolicy))))
+			mux.Handle("POST "+environmentFlagBase+"/preview", authHandlers.requireAuth(http.HandlerFunc(targetingHandlers.preview)))
+			mux.Handle("GET "+segmentsPath, authHandlers.requireAuth(http.HandlerFunc(targetingHandlers.listSegments)))
+			mux.Handle("POST "+segmentsPath, authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(targetingHandlers.createSegment))))
+			mux.Handle("PUT "+segmentsPath+"/{segment}", authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(targetingHandlers.updateSegment))))
+			mux.Handle("GET "+schedulesPath, authHandlers.requireAuth(http.HandlerFunc(targetingHandlers.listScheduledChanges)))
+			mux.Handle("POST "+schedulesPath, authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(targetingHandlers.createScheduledChange))))
+			mux.Handle("POST "+schedulesPath+"/{schedule}/cancel", authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(targetingHandlers.cancelScheduledChange))))
 		}
 	}
 
