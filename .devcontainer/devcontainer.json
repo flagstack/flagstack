@@ -1,26 +1,93 @@
 {
   "name": "FlagStack",
-  "image": "mcr.microsoft.com/devcontainers/go:1.26-bookworm",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspace",
   "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/node:1": {
+      "nodeGypDependencies": true,
       "version": "24"
     },
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.26.6"
+    },
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
-  },
-  "postCreateCommand": "corepack enable && corepack prepare pnpm@11.22.0 --activate && cd frontend && pnpm install",
-  "forwardPorts": [5173, 8080, 5432],
-  "portsAttributes": {
-    "5173": { "label": "FlagStack frontend" },
-    "8080": { "label": "FlagStack API" },
-    "5432": { "label": "PostgreSQL" }
   },
   "customizations": {
     "vscode": {
       "extensions": [
         "golang.go",
+        "esbenp.prettier-vscode",
         "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode"
-      ]
+        "ms-vscode.vscode-typescript-next",
+        "github.copilot",
+        "github.copilot-chat",
+        "github.vscode-pull-request-github",
+        "github.remotehub",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "codezombiech.gitignore",
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "jock.svg",
+        "unifiedjs.vscode-mdx",
+        "openai.chatgpt"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "[go]": {
+          "editor.defaultFormatter": "golang.go",
+          "editor.formatOnSave": true
+        },
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[typescriptreact]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": "explicit"
+        }
+      }
     }
+  },
+  "forwardPorts": [5173, 8080, 5432],
+  "portsAttributes": {
+    "5173": {
+      "label": "FlagStack frontend",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "FlagStack API",
+      "onAutoForward": "notify"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "silent"
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/scripts/link-host-git-config.sh",
+  "remoteUser": "root",
+  "mounts": [
+    "source=flagstack-bash-history,target=/root/.history,type=volume",
+    "source=flagstack-codex-config,target=/root/.codex,type=volume",
+    "source=flagstack-claude-config,target=/root/.claude,type=volume",
+    "source=flagstack-github-cli-config,target=/root/.config/gh,type=volume",
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+    "source=${localEnv:HOME},target=/host-home,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached,readonly"
+  ],
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/root/.claude",
+    "CODEX_HOME": "/root/.codex",
+    "PNPM_HOME": "/usr/local/share/pnpm"
+  },
+  "remoteEnv": {
+    "PATH": "/usr/local/share/pnpm:${containerEnv:PATH}"
   }
 }
