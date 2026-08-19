@@ -28,6 +28,7 @@ func (Environment) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("project", Project.Type).Ref("environments").Field("project_id").Unique().Required().Immutable().Annotations(entsql.OnDelete(entsql.Cascade)),
 		edge.To("flag_configs", EnvironmentFlagConfig.Type),
+		edge.To("scheduled_flag_changes", ScheduledFlagChange.Type),
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
+	"github.com/flagstack/flagstack/backend/internal/evaluation"
 	"github.com/google/uuid"
 )
 
@@ -24,6 +25,7 @@ func (FeatureFlag) Fields() []ent.Field {
 		field.String("description").Default("").MaxLen(2000),
 		field.String("kind").NotEmpty().Immutable(),
 		field.JSON("default_value", json.RawMessage{}),
+		field.JSON("variants", []evaluation.Variant{}).Optional(),
 		field.Time("archived_at").Optional().Nillable(),
 		createdAtField(), updatedAtField(),
 	}
@@ -33,6 +35,7 @@ func (FeatureFlag) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("project", Project.Type).Ref("feature_flags").Field("project_id").Unique().Required().Immutable().Annotations(entsql.OnDelete(entsql.Cascade)),
 		edge.To("environment_configs", EnvironmentFlagConfig.Type),
+		edge.To("scheduled_changes", ScheduledFlagChange.Type),
 	}
 }
 

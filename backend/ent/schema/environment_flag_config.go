@@ -9,6 +9,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
+	"github.com/flagstack/flagstack/backend/internal/evaluation"
 	"github.com/google/uuid"
 )
 
@@ -23,6 +24,7 @@ func (EnvironmentFlagConfig) Fields() []ent.Field {
 		field.UUID("feature_flag_id", uuid.UUID{}).Immutable(),
 		field.Bool("enabled").Default(false),
 		field.JSON("value", json.RawMessage{}).Optional(),
+		field.JSON("policy", evaluation.Policy{}).Optional(),
 		field.Int64("revision").Default(1),
 		createdAtField(),
 		updatedAtField(),
