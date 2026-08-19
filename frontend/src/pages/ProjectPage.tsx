@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 import type { OrganisationMembership } from '../auth/types'
 import { CreateEnvironmentForm } from '../components/environments/CreateEnvironmentForm'
 import { CreateFeatureFlagForm } from '../components/feature-flags/CreateFeatureFlagForm'
+import { FeatureTargetingPanel } from '../components/feature-flags/FeatureTargetingPanel'
 import { Icon } from '../components/icons'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { PageHeader } from '../components/ui/PageHeader'
@@ -28,6 +29,7 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
   const [creatingEnvironment, setCreatingEnvironment] = useState(false)
   const [creatingFeatureFlag, setCreatingFeatureFlag] = useState(false)
   const [updatingConfig, setUpdatingConfig] = useState<string>()
+  const [targetingFlagID, setTargetingFlagID] = useState<string>()
 
   useEffect(() => {
     let cancelled = false
@@ -214,7 +216,7 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
         <CardHeader className="flex items-start justify-between gap-4 border-b border-slate-800">
           <div>
             <CardTitle>Feature flags</CardTitle>
-            <p className="mt-1 text-xs text-slate-500">Project definitions with independent enablement in each environment.</p>
+            <p className="mt-1 text-xs text-slate-500">Simple environment toggles plus variants, targeting rules, percentage rollouts and schedules.</p>
           </div>
           {canManage ? (
             <button
@@ -254,39 +256,39 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
               </span>
               <strong className="mt-3 text-sm font-medium text-slate-300">No feature flags yet</strong>
               <p className="mt-1 max-w-md text-xs leading-5 text-slate-600">
-                Create a flag once, then control whether it is enabled independently in every environment.
+                Create a flag once, then control delivery independently in every environment.
               </p>
             </div>
           ) : (
             <div className="divide-y divide-slate-800">
               {featureFlags.map((featureFlag) => (
-                <div className="px-5 py-4" key={featureFlag.id}>
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="flex min-w-0 gap-3">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-flagstack-500/10 text-flagstack-400">
-                        <Icon name="flag" size={17} />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <strong className="text-sm font-medium text-slate-200">{featureFlag.name}</strong>
-                          <code className="rounded bg-slate-950 px-1.5 py-0.5 text-[10px] text-slate-500">{featureFlag.key}</code>
-                          <span className="rounded border border-slate-800 bg-slate-950/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                            {featureFlag.kind}
-                          </span>
+                <div key={featureFlag.id}>
+                  <div className="px-5 py-4">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="flex min-w-0 gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-flagstack-500/10 text-flagstack-400">
+                          <Icon name="flag" size={17} />
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <strong className="text-sm font-medium text-slate-200">{featureFlag.name}</strong>
+                            <code className="rounded bg-slate-950 px-1.5 py-0.5 text-[10px] text-slate-500">{featureFlag.key}</code>
+                            <span className="rounded border border-slate-800 bg-slate-950/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                              {featureFlag.kind}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs text-slate-600">{featureFlag.description || 'No description'}</p>
+                          <p className="mt-2 text-[11px] text-slate-500">
+                            Default: <code className="text-slate-400">{formatDefaultValue(featureFlag.default_value)}</code>
+                          </p>
                         </div>
-                        <p className="mt-1 text-xs text-slate-600">{featureFlag.description || 'No description'}</p>
-                        <p className="mt-2 text-[11px] text-slate-500">
-                          Default: <code className="text-slate-400">{formatDefaultValue(featureFlag.default_value)}</code>
-                        </p>
                       </div>
-                    </div>
 
-                    <div className="min-w-0 lg:max-w-[55%]">
-                      {environments.length === 0 ? (
-                        <span className="text-xs text-slate-600">Create an environment to control delivery.</span>
-                      ) : (
-                        <div className="flex flex-wrap gap-2">
-                          {environments.map((environment) => {
+                      <div className="min-w-0 lg:max-w-[60%]">
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          {environments.length === 0 ? (
+                            <span className="text-xs text-slate-600">Create an environment to control delivery.</span>
+                          ) : environments.map((environment) => {
                             const config = flagConfigs.find(
                               (candidate) => candidate.environment_id === environment.id && candidate.feature_flag_id === featureFlag.id,
                             )
@@ -316,10 +318,32 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
                               </button>
                             )
                           })}
+                          <button
+                            className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+                              targetingFlagID === featureFlag.id
+                                ? 'border-flagstack-500/60 bg-flagstack-500/10 text-flagstack-300'
+                                : 'border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600 hover:text-slate-200'
+                            }`}
+                            onClick={() => setTargetingFlagID((current) => current === featureFlag.id ? undefined : featureFlag.id)}
+                            type="button"
+                          >
+                            {targetingFlagID === featureFlag.id ? 'Close targeting' : 'Targeting & rollout'}
+                          </button>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
+
+                  {targetingFlagID === featureFlag.id ? (
+                    <FeatureTargetingPanel
+                      canManage={canManage}
+                      environments={environments}
+                      featureFlag={featureFlag}
+                      onClose={() => setTargetingFlagID(undefined)}
+                      organisation={organisation}
+                      projectID={project.id}
+                    />
+                  ) : null}
                 </div>
               ))}
             </div>
