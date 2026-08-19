@@ -75,7 +75,7 @@ func TestFlagConfigHandlerRejectsViewerMutation(t *testing.T) {
 
 func TestFlagConfigHandlerMapsMissingTargets(t *testing.T) {
 	for name, repositoryError := range map[string]error{
-		"environment": coreflagconfig.ErrEnvironmentNotFound,
+		"environment":  coreflagconfig.ErrEnvironmentNotFound,
 		"feature flag": coreflagconfig.ErrFeatureFlagNotFound,
 	} {
 		t.Run(name, func(t *testing.T) {
