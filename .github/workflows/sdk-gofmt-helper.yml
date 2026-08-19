@@ -1,0 +1,37 @@
+name: SDK Gofmt Helper
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.head_ref == 'agent/sdk-config-gofmt-helper'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout helper branch
+        uses: actions/checkout@v6
+        with:
+          ref: agent/sdk-config-gofmt-helper
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/go.mod
+          cache: false
+
+      - name: Format SDK test
+        run: gofmt -w backend/internal/sdkconfig/sdkconfig_test.go
+
+      - name: Commit formatting
+        run: |
+          git config user.name "Adam Birds"
+          git config user.email "adam.birds@adbwebdesigns.co.uk"
+          git add -- backend/internal/sdkconfig/sdkconfig_test.go
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "ci: Format SDK configuration helper."
+          git push origin HEAD:agent/sdk-config-gofmt-helper
