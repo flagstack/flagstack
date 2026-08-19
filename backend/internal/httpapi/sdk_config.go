@@ -37,6 +37,17 @@ func newSDKConfigHandlers(service *coresdkconfig.Service) *sdkConfigHandlers {
 }
 
 func (h *sdkConfigHandlers) configuration(w http.ResponseWriter, r *http.Request) {
+	setSDKCORSHeaders(w)
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", "GET, OPTIONS")
+		writeAPIError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Only GET and OPTIONS are supported.")
+		return
+	}
+
 	key, ok := bearerToken(r.Header.Get("Authorization"))
 	if !ok {
 		writeSDKUnauthorized(w)
@@ -183,6 +194,13 @@ func bearerToken(header string) (string, bool) {
 func writeSDKUnauthorized(w http.ResponseWriter) {
 	w.Header().Set("WWW-Authenticate", `Bearer realm="FlagStack SDK"`)
 	writeAPIError(w, http.StatusUnauthorized, "invalid_sdk_credential", "A valid SDK credential is required.")
+}
+
+func setSDKCORSHeaders(w http.ResponseWriter) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Authorization, If-None-Match")
+	w.Header().Set("Access-Control-Expose-Headers", "ETag")
 }
 
 func canManageSDKCredentials(role string) bool {
