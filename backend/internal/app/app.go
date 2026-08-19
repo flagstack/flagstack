@@ -16,9 +16,13 @@ import (
 	"github.com/flagstack/flagstack/backend/internal/flagconfig"
 	"github.com/flagstack/flagstack/backend/internal/httpapi"
 	"github.com/flagstack/flagstack/backend/internal/project"
+	"github.com/flagstack/flagstack/backend/internal/targeting"
 )
 
-const shutdownTimeout = 10 * time.Second
+const (
+	shutdownTimeout   = 10 * time.Second
+	schedulerInterval = 5 * time.Second
+)
 
 func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	pool, err := database.Open(ctx, cfg.DatabaseURL)
@@ -48,8 +52,14 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	}
 	flagConfigService, err := flagconfig.NewService(database.NewFlagConfigRepository(entClient))
 	if err != nil {
-		return fmt.Errorf("create flag config service: %w", err)
+		return fmt.Errorf("create flag configuration service: %w", err)
 	}
+	targetingService, err := targeting.NewService(database.NewTargetingRepository(entClient))
+	if err != nil {
+		return fmt.Errorf("create targeting service: %w", err)
+	}
+
+	go runScheduler(ctx, logger, targetingService)
 
 	server := &http.Server{
 		Addr: cfg.HTTPAddr,
@@ -59,6 +69,7 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 			Environments: environmentService,
 			FeatureFlags: featureFlagService,
 			FlagConfigs:  flagConfigService,
+			Targeting:    targetingService,
 		}, httpapi.AuthOptions{SecureCookies: cfg.SessionCookieSecure}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
@@ -87,4 +98,29 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	}
 
 	return nil
+}
+
+func runScheduler(ctx context.Context, logger *slog.Logger, service *targeting.Service) {
+	run := func() {
+		completed, err := service.RunDueScheduledChanges(ctx, 50)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			logger.ErrorContext(ctx, "scheduled flag changes failed", "error", err)
+			return
+		}
+		if completed > 0 {
+			logger.InfoContext(ctx, "scheduled flag changes executed", "count", completed)
+		}
+	}
+
+	run()
+	ticker := time.NewTicker(schedulerInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			run()
+		}
+	}
 }
