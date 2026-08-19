@@ -14,6 +14,7 @@ type OrganisationMembership struct{ ent.Schema }
 
 func (OrganisationMembership) Fields() []ent.Field {
 	return []ent.Field{
+		uuidIDField(),
 		field.UUID("organisation_id", uuid.UUID{}).Immutable(),
 		field.UUID("user_id", uuid.UUID{}).Immutable(),
 		field.String("role").NotEmpty(),
@@ -30,12 +31,14 @@ func (OrganisationMembership) Edges() []ent.Edge {
 }
 
 func (OrganisationMembership) Indexes() []ent.Index {
-	return []ent.Index{index.Fields("user_id", "organisation_id").StorageKey("organisation_memberships_user_idx")}
+	return []ent.Index{
+		index.Fields("organisation_id", "user_id").Unique(),
+		index.Fields("user_id", "organisation_id").StorageKey("organisation_memberships_user_idx"),
+	}
 }
 
 func (OrganisationMembership) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		field.ID("organisation_id", "user_id"),
 		entsql.Annotation{Table: "organisation_memberships", Checks: map[string]string{"organisation_memberships_role": "role IN ('owner', 'admin', 'developer', 'viewer')"}},
 	}
 }

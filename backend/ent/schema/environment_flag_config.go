@@ -16,6 +16,7 @@ type EnvironmentFlagConfig struct{ ent.Schema }
 
 func (EnvironmentFlagConfig) Fields() []ent.Field {
 	return []ent.Field{
+		uuidIDField(),
 		field.UUID("organisation_id", uuid.UUID{}).Immutable(),
 		field.UUID("project_id", uuid.UUID{}).Immutable(),
 		field.UUID("environment_id", uuid.UUID{}).Immutable(),
@@ -23,7 +24,8 @@ func (EnvironmentFlagConfig) Fields() []ent.Field {
 		field.Bool("enabled").Default(false),
 		field.JSON("value", json.RawMessage{}).Optional(),
 		field.Int64("revision").Default(1),
-		createdAtField(), updatedAtField(),
+		createdAtField(),
+		updatedAtField(),
 	}
 }
 
@@ -35,12 +37,14 @@ func (EnvironmentFlagConfig) Edges() []ent.Edge {
 }
 
 func (EnvironmentFlagConfig) Indexes() []ent.Index {
-	return []ent.Index{index.Fields("feature_flag_id", "environment_id").StorageKey("environment_flag_configs_flag_idx")}
+	return []ent.Index{
+		index.Fields("environment_id", "feature_flag_id").Unique(),
+		index.Fields("feature_flag_id", "environment_id").StorageKey("environment_flag_configs_flag_idx"),
+	}
 }
 
 func (EnvironmentFlagConfig) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		field.ID("environment_id", "feature_flag_id"),
 		entsql.Annotation{Table: "environment_flag_configs", Checks: map[string]string{
 			"environment_flag_configs_revision_positive": "revision > 0",
 		}},
