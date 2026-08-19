@@ -1,7 +1,12 @@
+import { useEffect, useMemo, useState } from 'react'
+import type { OrganisationMembership } from '../auth/types'
 import { Icon } from '../components/icons'
+import { CreateProjectForm } from '../components/projects/CreateProjectForm'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { PageHeader } from '../components/ui/PageHeader'
 import { StatCard } from '../components/ui/StatCard'
+import { APIError, apiRequest } from '../lib/api'
+import type { Project, ProjectListResponse } from '../project/types'
 
 const setupSteps = [
   ['Create your first project', 'Projects keep flags and environments isolated by application.'],
@@ -10,14 +15,63 @@ const setupSteps = [
   ['Connect an SDK', 'Use an environment-scoped key so evaluation stays local to your app.'],
 ] as const
 
-export function DashboardPage() {
+interface DashboardPageProps {
+  organisation: OrganisationMembership
+}
+
+export function DashboardPage({ organisation }: DashboardPageProps) {
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string>()
+  const [creatingProject, setCreatingProject] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError(undefined)
+
+    void apiRequest<ProjectListResponse>(
+      `/api/v1/organisations/${encodeURIComponent(organisation.slug)}/projects`,
+    )
+      .then((response) => {
+        if (!cancelled) {
+          setProjects(response.projects)
+        }
+      })
+      .catch((requestError) => {
+        if (!cancelled) {
+          setError(requestError instanceof APIError ? requestError.message : 'Projects could not be loaded.')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [organisation.slug])
+
+  const environmentCount = useMemo(
+    () => projects.reduce((total, project) => total + project.environment_count, 0),
+    [projects],
+  )
+  const featureFlagCount = useMemo(
+    () => projects.reduce((total, project) => total + project.feature_flag_count, 0),
+    [projects],
+  )
+  const completedSteps = [projects.length > 0, environmentCount > 0, featureFlagCount > 0, false].filter(Boolean).length
+  const canCreateProject = organisation.role === 'owner' || organisation.role === 'admin'
+
   return (
     <div className="mx-auto w-full max-w-[100rem] px-4 py-6 lg:px-6 lg:py-8" id="dashboard">
       <PageHeader
         actions={
           <span className="inline-flex h-8 items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/60 px-3 text-xs font-medium text-slate-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-flagstack-400 ring-4 ring-flagstack-400/10" />
-            Development preview
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 ring-4 ring-emerald-400/10" />
+            {organisation.name}
           </span>
         }
         description="A quick view of projects, environments and feature-flag activity across your organisation."
@@ -26,10 +80,33 @@ export function DashboardPage() {
       />
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard helper="Create a project to get started" icon={<Icon name="project" />} label="Projects" value="0" />
-        <StatCard accent="blue" helper="Scoped within projects" icon={<Icon name="environment" />} label="Environments" value="0" />
-        <StatCard accent="green" helper="No flags configured yet" icon={<Icon name="flag" />} label="Feature flags" value="0" />
-        <StatCard accent="orange" helper="Environment SDK access" icon={<Icon name="code" />} label="SDK keys" value="0" />
+        <StatCard
+          helper={projects.length === 0 ? 'Create a project to get started' : 'Active projects'}
+          icon={<Icon name="project" />}
+          label="Projects"
+          value={loading ? '—' : String(projects.length)}
+        />
+        <StatCard
+          accent="blue"
+          helper="Scoped within projects"
+          icon={<Icon name="environment" />}
+          label="Environments"
+          value={loading ? '—' : String(environmentCount)}
+        />
+        <StatCard
+          accent="green"
+          helper={featureFlagCount === 0 ? 'No flags configured yet' : 'Active flags'}
+          icon={<Icon name="flag" />}
+          label="Feature flags"
+          value={loading ? '—' : String(featureFlagCount)}
+        />
+        <StatCard
+          accent="orange"
+          helper="Environment SDK access"
+          icon={<Icon name="code" />}
+          label="SDK keys"
+          value="0"
+        />
       </div>
 
       <div className="mt-6 grid gap-4 xl:grid-cols-12">
@@ -39,15 +116,89 @@ export function DashboardPage() {
               <CardTitle>Projects</CardTitle>
               <p className="mt-1 text-xs text-slate-500">Applications and services using FlagStack.</p>
             </div>
-            <span className="rounded-md border border-slate-800 bg-slate-950/60 px-2 py-1 text-[10px] font-semibold text-slate-500">0 total</span>
-          </CardHeader>
-          <CardContent className="flex min-h-56 flex-col items-center justify-center px-5 py-10 text-center">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-700 bg-slate-800/60 text-slate-400">
-              <Icon name="project" size={22} />
+            <div className="flex items-center gap-2">
+              <span className="rounded-md border border-slate-800 bg-slate-950/60 px-2 py-1 text-[10px] font-semibold text-slate-500">
+                {loading ? '—' : projects.length} total
+              </span>
+              {canCreateProject ? (
+                <button
+                  className="rounded-lg bg-flagstack-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-flagstack-500"
+                  onClick={() => setCreatingProject((value) => !value)}
+                  type="button"
+                >
+                  {creatingProject ? 'Close' : 'Create project'}
+                </button>
+              ) : null}
             </div>
-            <strong className="mt-3 text-sm font-medium text-slate-300">No projects yet</strong>
-            <p className="mt-1 max-w-md text-xs leading-5 text-slate-600">Your first project will contain its own environments, flags and SDK credentials.</p>
-            <button className="mt-4 cursor-not-allowed rounded-lg border border-violet-900/70 bg-violet-950/40 px-3 py-2 text-xs font-semibold text-violet-300 opacity-60" disabled type="button">Create project</button>
+          </CardHeader>
+
+          {creatingProject ? (
+            <CreateProjectForm
+              onCancel={() => setCreatingProject(false)}
+              onCreated={(project) => {
+                setProjects((current) => [project, ...current])
+                setCreatingProject(false)
+              }}
+              organisation={organisation}
+            />
+          ) : null}
+
+          <CardContent className="min-h-56">
+            {error ? (
+              <div className="m-5 rounded-lg border border-red-900/60 bg-red-950/30 px-3 py-2.5 text-xs leading-5 text-red-300">
+                {error}
+              </div>
+            ) : loading ? (
+              <div className="flex min-h-56 items-center justify-center text-xs text-slate-600">Loading projects…</div>
+            ) : projects.length === 0 ? (
+              <div className="flex min-h-56 flex-col items-center justify-center px-5 py-10 text-center">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-700 bg-slate-800/60 text-slate-400">
+                  <Icon name="project" size={22} />
+                </div>
+                <strong className="mt-3 text-sm font-medium text-slate-300">No projects yet</strong>
+                <p className="mt-1 max-w-md text-xs leading-5 text-slate-600">
+                  Your first project will contain its own environments, flags and SDK credentials.
+                </p>
+                {canCreateProject && !creatingProject ? (
+                  <button
+                    className="mt-4 rounded-lg bg-flagstack-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-flagstack-500"
+                    onClick={() => setCreatingProject(true)}
+                    type="button"
+                  >
+                    Create project
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-800">
+                {projects.map((project) => (
+                  <div className="flex items-center gap-4 px-5 py-4" key={project.id}>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-flagstack-500/10 text-flagstack-400">
+                      <Icon name="project" size={17} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <strong className="truncate text-sm font-medium text-slate-200">{project.name}</strong>
+                        <code className="rounded bg-slate-950 px-1.5 py-0.5 text-[10px] text-slate-500">{project.key}</code>
+                      </div>
+                      <p className="mt-1 truncate text-xs text-slate-600">
+                        {project.description || 'No description'}
+                      </p>
+                    </div>
+                    <div className="hidden shrink-0 items-center gap-4 text-right sm:flex">
+                      <div>
+                        <strong className="block text-xs font-semibold text-slate-300">{project.environment_count}</strong>
+                        <span className="text-[10px] text-slate-600">environments</span>
+                      </div>
+                      <div>
+                        <strong className="block text-xs font-semibold text-slate-300">{project.feature_flag_count}</strong>
+                        <span className="text-[10px] text-slate-600">flags</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -78,18 +229,23 @@ export function DashboardPage() {
               <CardTitle>Feature flags</CardTitle>
               <p className="mt-1 text-xs text-slate-500">Configuration status across the current organisation.</p>
             </div>
-            <span className="rounded-md border border-emerald-900/40 bg-emerald-950/20 px-2 py-1 text-[10px] font-semibold text-emerald-400">All clear</span>
+            <span className="rounded-md border border-emerald-900/40 bg-emerald-950/20 px-2 py-1 text-[10px] font-semibold text-emerald-400">
+              {featureFlagCount === 0 ? 'No flags' : `${featureFlagCount} active`}
+            </span>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between gap-4 px-5 py-4">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-flagstack-500/10 text-flagstack-400"><Icon name="flag" size={16} /></span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-flagstack-500/10 text-flagstack-400">
+                  <Icon name="flag" size={16} />
+                </span>
                 <div className="min-w-0">
-                  <strong className="text-sm font-medium text-slate-300">No flags configured</strong>
-                  <p className="mt-0.5 truncate text-xs text-slate-600">Flags will be grouped by project with their type and rollout state.</p>
+                  <strong className="text-sm font-medium text-slate-300">
+                    {featureFlagCount === 0 ? 'No flags configured' : `${featureFlagCount} feature flags`}
+                  </strong>
+                  <p className="mt-0.5 truncate text-xs text-slate-600">Flag management is the next project workflow to land.</p>
                 </div>
               </div>
-              <span className="text-xs text-slate-700">—</span>
             </div>
           </CardContent>
         </Card>
@@ -101,9 +257,13 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-3 px-5 py-4">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400"><Icon name="environment" size={17} /></span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+                <Icon name="environment" size={17} />
+              </span>
               <div>
-                <strong className="text-sm font-medium text-slate-300">No environments yet</strong>
+                <strong className="text-sm font-medium text-slate-300">
+                  {environmentCount === 0 ? 'No environments yet' : `${environmentCount} environments`}
+                </strong>
                 <p className="mt-0.5 text-xs text-slate-600">Environments are created inside a project.</p>
               </div>
             </div>
@@ -117,18 +277,31 @@ export function DashboardPage() {
             <CardTitle>Getting started</CardTitle>
             <p className="mt-1 text-xs text-slate-500">The shortest path from an empty workspace to your first evaluated flag.</p>
           </div>
-          <span className="w-fit rounded-md border border-slate-800 bg-slate-950/60 px-2 py-1 text-[10px] font-semibold text-slate-500">0 of {setupSteps.length} complete</span>
+          <span className="w-fit rounded-md border border-slate-800 bg-slate-950/60 px-2 py-1 text-[10px] font-semibold text-slate-500">
+            {completedSteps} of {setupSteps.length} complete
+          </span>
         </CardHeader>
         <CardContent className="grid sm:grid-cols-2 xl:grid-cols-4">
-          {setupSteps.map(([label, detail], index) => (
-            <div className="flex gap-3 border-slate-800 p-5 sm:[&:nth-child(even)]:border-l xl:border-l xl:first:border-l-0" key={label}>
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-violet-900/70 bg-violet-950/30 text-[10px] font-bold text-flagstack-400">{index + 1}</span>
-              <div>
-                <strong className="text-sm font-medium text-slate-300">{label}</strong>
-                <p className="mt-1 text-xs leading-5 text-slate-600">{detail}</p>
+          {setupSteps.map(([label, detail], index) => {
+            const complete = index < 3 ? [projects.length > 0, environmentCount > 0, featureFlagCount > 0][index] : false
+            return (
+              <div className="flex gap-3 border-slate-800 p-5 sm:[&:nth-child(even)]:border-l xl:border-l xl:first:border-l-0" key={label}>
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold ${
+                    complete
+                      ? 'border-emerald-800 bg-emerald-950/40 text-emerald-400'
+                      : 'border-violet-900/70 bg-violet-950/30 text-flagstack-400'
+                  }`}
+                >
+                  {complete ? '✓' : index + 1}
+                </span>
+                <div>
+                  <strong className="text-sm font-medium text-slate-300">{label}</strong>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">{detail}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </CardContent>
       </Card>
     </div>
