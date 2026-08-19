@@ -10,9 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Environment struct {
-	ent.Schema
-}
+type Environment struct{ ent.Schema }
 
 func (Environment) Fields() []ent.Field {
 	return []ent.Field{
@@ -22,20 +20,14 @@ func (Environment) Fields() []ent.Field {
 		field.String("name").NotEmpty().MaxLen(160),
 		field.String("key").NotEmpty().MaxLen(64).Immutable(),
 		field.String("description").Default("").MaxLen(2000),
-		createdAtField(),
-		updatedAtField(),
+		createdAtField(), updatedAtField(),
 	}
 }
 
 func (Environment) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("project", Project.Type).
-			Field("project_id").
-			Unique().
-			Required().
-			Immutable().
-			Annotations(entsql.OnDelete(entsql.Cascade)),
-		edge.From("flag_configs", EnvironmentFlagConfig.Type).Ref("environment"),
+		edge.From("project", Project.Type).Ref("environments").Field("project_id").Unique().Required().Immutable().Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.To("flag_configs", EnvironmentFlagConfig.Type),
 	}
 }
 
@@ -47,13 +39,8 @@ func (Environment) Indexes() []ent.Index {
 }
 
 func (Environment) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entsql.Annotation{
-			Table: "environments",
-			Checks: map[string]string{
-				"environments_name_not_blank": "btrim(name) <> ''",
-				"environments_key_not_blank":  "btrim(key) <> ''",
-			},
-		},
-	}
+	return []schema.Annotation{entsql.Annotation{Table: "environments", Checks: map[string]string{
+		"environments_name_not_blank": "btrim(name) <> ''",
+		"environments_key_not_blank":  "btrim(key) <> ''",
+	}}}
 }

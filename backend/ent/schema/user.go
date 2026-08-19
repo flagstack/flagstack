@@ -25,9 +25,9 @@ func (User) Fields() []ent.Field {
 
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("memberships", OrganisationMembership.Type).Ref("user"),
-		edge.From("local_credential", LocalCredential.Type).Ref("user").Unique(),
-		edge.From("sessions", UserSession.Type).Ref("user"),
+		edge.To("memberships", OrganisationMembership.Type),
+		edge.To("local_credential", LocalCredential.Type).Unique(),
+		edge.To("sessions", UserSession.Type),
 	}
 }
 

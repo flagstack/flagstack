@@ -10,9 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type Project struct {
-	ent.Schema
-}
+type Project struct{ ent.Schema }
 
 func (Project) Fields() []ent.Field {
 	return []ent.Field{
@@ -22,21 +20,15 @@ func (Project) Fields() []ent.Field {
 		field.String("key").NotEmpty().MaxLen(64).Immutable(),
 		field.String("description").Default("").MaxLen(2000),
 		field.Time("archived_at").Optional().Nillable(),
-		createdAtField(),
-		updatedAtField(),
+		createdAtField(), updatedAtField(),
 	}
 }
 
 func (Project) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("organisation", Organisation.Type).
-			Field("organisation_id").
-			Unique().
-			Required().
-			Immutable().
-			Annotations(entsql.OnDelete(entsql.Cascade)),
-		edge.From("environments", Environment.Type).Ref("project"),
-		edge.From("feature_flags", FeatureFlag.Type).Ref("project"),
+		edge.From("organisation", Organisation.Type).Ref("projects").Field("organisation_id").Unique().Required().Immutable().Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.To("environments", Environment.Type),
+		edge.To("feature_flags", FeatureFlag.Type),
 	}
 }
 
@@ -44,23 +36,13 @@ func (Project) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("organisation_id", "id").Unique(),
 		index.Fields("organisation_id", "key").Unique(),
-		index.Fields("organisation_id", "created_at").
-			StorageKey("projects_organisation_active_idx").
-			Annotations(
-				entsql.DescColumns("created_at"),
-				entsql.IndexWhere("archived_at IS NULL"),
-			),
+		index.Fields("organisation_id", "created_at").StorageKey("projects_organisation_active_idx").Annotations(entsql.DescColumns("created_at"), entsql.IndexWhere("archived_at IS NULL")),
 	}
 }
 
 func (Project) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entsql.Annotation{
-			Table: "projects",
-			Checks: map[string]string{
-				"projects_name_not_blank": "btrim(name) <> ''",
-				"projects_key_not_blank":  "btrim(key) <> ''",
-			},
-		},
-	}
+	return []schema.Annotation{entsql.Annotation{Table: "projects", Checks: map[string]string{
+		"projects_name_not_blank": "btrim(name) <> ''",
+		"projects_key_not_blank":  "btrim(key) <> ''",
+	}}}
 }
