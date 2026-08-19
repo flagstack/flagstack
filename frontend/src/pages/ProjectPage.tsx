@@ -5,6 +5,7 @@ import { CreateEnvironmentForm } from '../components/environments/CreateEnvironm
 import { CreateFeatureFlagForm } from '../components/feature-flags/CreateFeatureFlagForm'
 import { FeatureTargetingPanel } from '../components/feature-flags/FeatureTargetingPanel'
 import { Icon } from '../components/icons'
+import { SDKCredentialsPanel } from '../components/sdk/SDKCredentialsPanel'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card'
 import { PageHeader } from '../components/ui/PageHeader'
 import type { Environment, EnvironmentListResponse } from '../environment/types'
@@ -12,6 +13,7 @@ import type { FeatureFlag, FeatureFlagListResponse } from '../featureflag/types'
 import type { FlagConfig, FlagConfigListResponse } from '../flagconfig/types'
 import { APIError, apiRequest } from '../lib/api'
 import type { Project, ProjectListResponse } from '../project/types'
+import type { ClientVisibilityResponse, SDKCredential, SDKCredentialListResponse } from '../sdkconfig/types'
 
 interface ProjectPageProps {
   organisation: OrganisationMembership
@@ -23,13 +25,16 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
   const [environments, setEnvironments] = useState<Environment[]>([])
   const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([])
   const [flagConfigs, setFlagConfigs] = useState<FlagConfig[]>([])
+  const [sdkCredentials, setSDKCredentials] = useState<SDKCredential[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>()
   const [actionError, setActionError] = useState<string>()
   const [creatingEnvironment, setCreatingEnvironment] = useState(false)
   const [creatingFeatureFlag, setCreatingFeatureFlag] = useState(false)
   const [updatingConfig, setUpdatingConfig] = useState<string>()
+  const [updatingClientVisibility, setUpdatingClientVisibility] = useState<string>()
   const [targetingFlagID, setTargetingFlagID] = useState<string>()
+  const canManageSDKCredentials = organisation.role === 'owner' || organisation.role === 'admin'
 
   useEffect(() => {
     let cancelled = false
@@ -46,10 +51,14 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
         }
 
         const projectPath = `/api/v1/organisations/${encodeURIComponent(organisation.slug)}/projects/${encodeURIComponent(selected.id)}`
-        const [environmentResponse, featureFlagResponse, flagConfigResponse] = await Promise.all([
+        const credentialRequest = canManageSDKCredentials
+          ? apiRequest<SDKCredentialListResponse>(`${projectPath}/sdk-credentials`)
+          : Promise.resolve<SDKCredentialListResponse>({ credentials: [] })
+        const [environmentResponse, featureFlagResponse, flagConfigResponse, credentialResponse] = await Promise.all([
           apiRequest<EnvironmentListResponse>(`${projectPath}/environments`),
           apiRequest<FeatureFlagListResponse>(`${projectPath}/feature-flags`),
           apiRequest<FlagConfigListResponse>(`${projectPath}/flag-configs`),
+          credentialRequest,
         ])
 
         if (!cancelled) {
@@ -57,6 +66,7 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
           setEnvironments(environmentResponse.environments)
           setFeatureFlags(featureFlagResponse.feature_flags)
           setFlagConfigs(flagConfigResponse.configs)
+          setSDKCredentials(credentialResponse.credentials)
         }
       })
       .catch((requestError) => {
@@ -73,7 +83,7 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
     return () => {
       cancelled = true
     }
-  }, [organisation.slug, projectKey])
+  }, [canManageSDKCredentials, organisation.slug, projectKey])
 
   if (loading) {
     return <ProjectState message="Loading project…" />
@@ -115,6 +125,29 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
       setUpdatingConfig(undefined)
     }
   }
+
+  async function setFlagClientVisible(featureFlagID: string, clientVisible: boolean) {
+    if (!project || !canManageSDKCredentials) {
+      return
+    }
+    setUpdatingClientVisibility(featureFlagID)
+    setActionError(undefined)
+    try {
+      const response = await apiRequest<ClientVisibilityResponse>(
+        `/api/v1/organisations/${encodeURIComponent(organisation.slug)}/projects/${encodeURIComponent(project.id)}/feature-flags/${encodeURIComponent(featureFlagID)}/client-visibility`,
+        { method: 'PUT', body: JSON.stringify({ client_visible: clientVisible }) },
+      )
+      setFeatureFlags((current) => current.map((flag) => (
+        flag.id === featureFlagID ? { ...flag, client_visible: response.client_visible } : flag
+      )))
+    } catch (requestError) {
+      setActionError(requestError instanceof APIError ? requestError.message : 'Client visibility could not be updated.')
+    } finally {
+      setUpdatingClientVisibility(undefined)
+    }
+  }
+
+  const activeSDKCredentials = sdkCredentials.filter((credential) => !credential.revoked_at)
 
   return (
     <div className="mx-auto w-full max-w-[100rem] px-4 py-6 lg:px-6 lg:py-8">
@@ -207,10 +240,24 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
           <CardContent className="divide-y divide-slate-800">
             <OverviewRow icon="environment" label="Environments" value={String(environments.length)} />
             <OverviewRow icon="flag" label="Feature flags" value={String(featureFlags.length)} />
-            <OverviewRow icon="key" label="SDK keys" value="0" />
+            <OverviewRow icon="key" label="SDK keys" value={canManageSDKCredentials ? String(activeSDKCredentials.length) : '—'} />
           </CardContent>
         </Card>
       </div>
+
+      {canManageSDKCredentials ? (
+        <SDKCredentialsPanel
+          canManage
+          credentials={sdkCredentials}
+          environments={environments}
+          onCreated={(credential) => setSDKCredentials((current) => [...current, credential])}
+          onRevoked={(credential) => setSDKCredentials((current) => current.map((candidate) => (
+            candidate.id === credential.id ? credential : candidate
+          )))}
+          organisation={organisation}
+          projectID={project.id}
+        />
+      ) : null}
 
       <Card className="mt-4">
         <CardHeader className="flex items-start justify-between gap-4 border-b border-slate-800">
@@ -276,6 +323,19 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
                             <span className="rounded border border-slate-800 bg-slate-950/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                               {featureFlag.kind}
                             </span>
+                            <button
+                              className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition disabled:cursor-default ${
+                                featureFlag.client_visible
+                                  ? 'border-sky-800/70 bg-sky-950/30 text-sky-300'
+                                  : 'border-slate-800 bg-slate-950/70 text-slate-600'
+                              }`}
+                              disabled={!canManageSDKCredentials || updatingClientVisibility === featureFlag.id}
+                              onClick={() => void setFlagClientVisible(featureFlag.id, !featureFlag.client_visible)}
+                              title={canManageSDKCredentials ? 'Control whether browser/client SDKs receive this flag.' : 'Only owners and admins can change client SDK exposure.'}
+                              type="button"
+                            >
+                              {updatingClientVisibility === featureFlag.id ? 'Updating…' : featureFlag.client_visible ? 'Client visible' : 'Server only'}
+                            </button>
                           </div>
                           <p className="mt-1 text-xs text-slate-600">{featureFlag.description || 'No description'}</p>
                           <p className="mt-2 text-[11px] text-slate-500">

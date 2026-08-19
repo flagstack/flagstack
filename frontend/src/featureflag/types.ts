@@ -8,6 +8,7 @@ export interface FeatureFlag {
   description: string
   kind: FeatureFlagKind
   default_value: unknown
+  client_visible: boolean
   created_at: string
 }
 
