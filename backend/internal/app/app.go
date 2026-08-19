@@ -16,6 +16,7 @@ import (
 	"github.com/flagstack/flagstack/backend/internal/flagconfig"
 	"github.com/flagstack/flagstack/backend/internal/httpapi"
 	"github.com/flagstack/flagstack/backend/internal/project"
+	"github.com/flagstack/flagstack/backend/internal/sdkconfig"
 	"github.com/flagstack/flagstack/backend/internal/targeting"
 )
 
@@ -58,6 +59,10 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("create targeting service: %w", err)
 	}
+	sdkConfigService, err := sdkconfig.NewService(database.NewSDKConfigRepository(entClient))
+	if err != nil {
+		return fmt.Errorf("create SDK configuration service: %w", err)
+	}
 
 	go runScheduler(ctx, logger, targetingService)
 
@@ -70,6 +75,7 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 			FeatureFlags: featureFlagService,
 			FlagConfigs:  flagConfigService,
 			Targeting:    targetingService,
+			SDKConfig:    sdkConfigService,
 		}, httpapi.AuthOptions{SecureCookies: cfg.SessionCookieSecure}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
