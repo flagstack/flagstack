@@ -26,11 +26,11 @@ jobs:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
 
-      - name: Check module metadata
-        run: go mod tidy -diff
-
       - name: Generate Ent client
         run: go generate ./ent
+
+      - name: Check module metadata
+        run: go mod tidy -diff
 
       - name: Check formatting
         run: |
