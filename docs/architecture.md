@@ -4,9 +4,8 @@ FlagStack starts as a modular monolith. That keeps self-hosting straightforward 
 
 ## Repository layout
 
-- `backend/` — Go API and application logic.
+- `backend/` — Go API, application logic, Ent schemas and persistence adapters.
 - `frontend/` — React/TypeScript dashboard built with Vite and Tailwind CSS.
-- `backend/migrations/` — PostgreSQL schema migrations.
 - `.devcontainer/` — reproducible development environment.
 - `compose.yml` — local infrastructure dependencies.
 
@@ -24,9 +23,13 @@ Tailwind CSS is the frontend styling foundation. Routing, server-state managemen
 
 ## Persistence
 
-PostgreSQL is the system of record. The initial schema defines users, organisations, memberships, projects, environments, feature flags, and environment-specific flag configuration as one coherent tenancy model.
+PostgreSQL 18 is the system of record. Ent schemas under `backend/ent/schema` are the source of truth for users, credentials, sessions, organisations, memberships, projects, environments, feature flags, and environment-specific flag configuration.
 
-The API uses pgx for native PostgreSQL connectivity and connection pooling. Schema changes are versioned as SQL migrations with Goose and are applied explicitly by operators/deployments rather than automatically at API startup.
+The API keeps pgx for native PostgreSQL connectivity and pooling. Ent is layered over that same pgx pool, so the application does not maintain a second database connection pool.
+
+Schema changes are applied by the explicit FlagStack migration command (`make db-up` or `make db-migrate`). The command runs Ent's migration engine with automatic destructive column/index drops disabled. Migrations are not run implicitly when the API starts.
+
+A small PostgreSQL-specific migration reconciler preserves the organisation/project-aware composite foreign keys that enforce tenant boundaries beyond Ent's ordinary single-column relationship foreign keys. The migration command also upgrades databases created by the earlier Goose migrations and removes the old Goose version table after a successful transition.
 
 PostgreSQL readiness is exposed separately from process liveness through `/readyz`.
 

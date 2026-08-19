@@ -4,224 +4,257 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
+	"time"
 
+	flagstackent "github.com/flagstack/flagstack/backend/ent"
+	"github.com/flagstack/flagstack/backend/ent/localcredential"
+	"github.com/flagstack/flagstack/backend/ent/organisationmembership"
+	"github.com/flagstack/flagstack/backend/ent/user"
+	"github.com/flagstack/flagstack/backend/ent/usersession"
 	"github.com/flagstack/flagstack/backend/internal/auth"
-	"github.com/jackc/pgx/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const bootstrapAdvisoryLock int64 = 0x466c616753746163
 
 type AuthRepository struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
+	client *flagstackent.Client
 }
 
-func NewAuthRepository(pool *pgxpool.Pool) *AuthRepository {
-	return &AuthRepository{pool: pool}
+func NewAuthRepository(pool *pgxpool.Pool, client *flagstackent.Client) *AuthRepository {
+	return &AuthRepository{pool: pool, client: client}
 }
 
 func (r *AuthRepository) BootstrapRequired(ctx context.Context) (bool, error) {
-	var required bool
-	if err := r.pool.QueryRow(ctx, `SELECT NOT EXISTS (SELECT 1 FROM users LIMIT 1)`).Scan(&required); err != nil {
+	exists, err := r.client.User.Query().Exist(ctx)
+	if err != nil {
 		return false, fmt.Errorf("check bootstrap status: %w", err)
 	}
-	return required, nil
+	return !exists, nil
 }
 
 func (r *AuthRepository) Bootstrap(ctx context.Context, record auth.BootstrapRecord) (auth.Principal, error) {
-	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	conn, err := r.pool.Acquire(ctx)
+	if err != nil {
+		return auth.Principal{}, fmt.Errorf("acquire bootstrap lock connection: %w", err)
+	}
+	defer conn.Release()
+
+	if _, err := conn.Exec(ctx, `SELECT pg_advisory_lock($1)`, bootstrapAdvisoryLock); err != nil {
+		return auth.Principal{}, fmt.Errorf("lock bootstrap: %w", err)
+	}
+	defer func() { _, _ = conn.Exec(context.Background(), `SELECT pg_advisory_unlock($1)`, bootstrapAdvisoryLock) }()
+
+	tx, err := r.client.Tx(ctx)
 	if err != nil {
 		return auth.Principal{}, fmt.Errorf("begin bootstrap transaction: %w", err)
 	}
-	defer func() { _ = tx.Rollback(ctx) }()
+	defer func() { _ = tx.Rollback() }()
 
-	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock($1)`, bootstrapAdvisoryLock); err != nil {
-		return auth.Principal{}, fmt.Errorf("lock bootstrap transaction: %w", err)
-	}
-
-	var userExists bool
-	if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users LIMIT 1)`).Scan(&userExists); err != nil {
+	exists, err := tx.User.Query().Exist(ctx)
+	if err != nil {
 		return auth.Principal{}, fmt.Errorf("recheck bootstrap status: %w", err)
 	}
-	if userExists {
+	if exists {
 		return auth.Principal{}, auth.ErrBootstrapComplete
 	}
 
-	var userID string
-	if err := tx.QueryRow(ctx,
-		`INSERT INTO users (email, display_name) VALUES ($1, $2) RETURNING id::text`,
-		record.Email,
-		record.DisplayName,
-	).Scan(&userID); err != nil {
+	userEntity, err := tx.User.Create().
+		SetEmail(record.Email).
+		SetDisplayName(record.DisplayName).
+		Save(ctx)
+	if err != nil {
 		return auth.Principal{}, fmt.Errorf("create bootstrap user: %w", err)
 	}
 
-	if _, err := tx.Exec(ctx,
-		`INSERT INTO local_credentials (user_id, password_hash) VALUES ($1, $2)`,
-		userID,
-		record.PasswordHash,
-	); err != nil {
+	if _, err := tx.LocalCredential.Create().
+		SetUserID(userEntity.ID).
+		SetPasswordHash(record.PasswordHash).
+		Save(ctx); err != nil {
 		return auth.Principal{}, fmt.Errorf("create bootstrap credential: %w", err)
 	}
 
-	var organisationID string
-	if err := tx.QueryRow(ctx,
-		`INSERT INTO organisations (name, slug) VALUES ($1, $2) RETURNING id::text`,
-		record.OrganisationName,
-		record.OrganisationSlug,
-	).Scan(&organisationID); err != nil {
+	organisationEntity, err := tx.Organisation.Create().
+		SetName(record.OrganisationName).
+		SetSlug(record.OrganisationSlug).
+		Save(ctx)
+	if err != nil {
 		return auth.Principal{}, fmt.Errorf("create bootstrap organisation: %w", err)
 	}
 
-	if _, err := tx.Exec(ctx,
-		`INSERT INTO organisation_memberships (organisation_id, user_id, role) VALUES ($1, $2, 'owner')`,
-		organisationID,
-		userID,
-	); err != nil {
+	if _, err := tx.OrganisationMembership.Create().
+		SetOrganisationID(organisationEntity.ID).
+		SetUserID(userEntity.ID).
+		SetRole("owner").
+		Save(ctx); err != nil {
 		return auth.Principal{}, fmt.Errorf("create bootstrap membership: %w", err)
 	}
 
-	if _, err := tx.Exec(ctx,
-		`INSERT INTO user_sessions (user_id, token_hash, csrf_hash, expires_at) VALUES ($1, $2, $3, $4)`,
-		userID,
-		record.SessionTokenHash[:],
-		record.CSRFHash[:],
-		record.SessionExpiresAt,
-	); err != nil {
+	if _, err := tx.UserSession.Create().
+		SetUserID(userEntity.ID).
+		SetTokenHash(record.SessionTokenHash[:]).
+		SetCsrfHash(record.CSRFHash[:]).
+		SetExpiresAt(record.SessionExpiresAt).
+		Save(ctx); err != nil {
 		return auth.Principal{}, fmt.Errorf("create bootstrap session: %w", err)
 	}
 
-	principal := auth.Principal{
-		User: auth.User{ID: userID, Email: record.Email, DisplayName: record.DisplayName},
-		Organisations: []auth.OrganisationMembership{{
-			ID:   organisationID,
-			Name: record.OrganisationName,
-			Slug: record.OrganisationSlug,
-			Role: "owner",
-		}},
-	}
-
-	if err := tx.Commit(ctx); err != nil {
+	if err := tx.Commit(); err != nil {
 		return auth.Principal{}, fmt.Errorf("commit bootstrap transaction: %w", err)
 	}
-	return principal, nil
+
+	return auth.Principal{
+		User: auth.User{
+			ID:          userEntity.ID.String(),
+			Email:       record.Email,
+			DisplayName: record.DisplayName,
+		},
+		Organisations: []auth.OrganisationMembership{{
+			ID:   organisationEntity.ID.String(),
+			Name: organisationEntity.Name,
+			Slug: organisationEntity.Slug,
+			Role: "owner",
+		}},
+	}, nil
 }
 
 func (r *AuthRepository) CredentialByEmail(ctx context.Context, email string) (auth.Credential, error) {
-	var credential auth.Credential
-	err := r.pool.QueryRow(ctx, `
-		SELECT u.id::text, c.password_hash
-		FROM users u
-		JOIN local_credentials c ON c.user_id = u.id
-		WHERE lower(u.email) = lower($1)
-	`, email).Scan(&credential.UserID, &credential.PasswordHash)
-	if errors.Is(err, pgx.ErrNoRows) {
+	normalized := strings.ToLower(strings.TrimSpace(email))
+	userEntity, err := r.client.User.Query().Where(user.Email(normalized)).Only(ctx)
+	if flagstackent.IsNotFound(err) {
+		return auth.Credential{}, auth.ErrCredentialNotFound
+	}
+	if err != nil {
+		return auth.Credential{}, fmt.Errorf("find local credential user: %w", err)
+	}
+
+	credentialEntity, err := r.client.LocalCredential.Query().
+		Where(localcredential.UserID(userEntity.ID)).
+		Only(ctx)
+	if flagstackent.IsNotFound(err) {
 		return auth.Credential{}, auth.ErrCredentialNotFound
 	}
 	if err != nil {
 		return auth.Credential{}, fmt.Errorf("find local credential: %w", err)
 	}
-	return credential, nil
+
+	return auth.Credential{
+		UserID:       userEntity.ID.String(),
+		PasswordHash: credentialEntity.PasswordHash,
+	}, nil
 }
 
 func (r *AuthRepository) CreateSession(ctx context.Context, record auth.SessionRecord) (auth.Principal, error) {
-	if _, err := r.pool.Exec(ctx,
-		`INSERT INTO user_sessions (user_id, token_hash, csrf_hash, expires_at) VALUES ($1, $2, $3, $4)`,
-		record.UserID,
-		record.TokenHash[:],
-		record.CSRFHash[:],
-		record.ExpiresAt,
-	); err != nil {
+	userID, err := uuid.Parse(record.UserID)
+	if err != nil {
+		return auth.Principal{}, fmt.Errorf("parse session user ID: %w", err)
+	}
+
+	if _, err := r.client.UserSession.Create().
+		SetUserID(userID).
+		SetTokenHash(record.TokenHash[:]).
+		SetCsrfHash(record.CSRFHash[:]).
+		SetExpiresAt(record.ExpiresAt).
+		Save(ctx); err != nil {
 		return auth.Principal{}, fmt.Errorf("create session: %w", err)
 	}
-	return r.principalByUserID(ctx, record.UserID)
+	return r.principalByUserID(ctx, userID)
 }
 
 func (r *AuthRepository) SessionByTokenHash(ctx context.Context, tokenHash [32]byte) (auth.Session, error) {
-	var session auth.Session
-	var csrfHash []byte
-	var userID string
-
-	err := r.pool.QueryRow(ctx, `
-		SELECT s.user_id::text, s.csrf_hash, s.expires_at, u.email, u.display_name
-		FROM user_sessions s
-		JOIN users u ON u.id = s.user_id
-		WHERE s.token_hash = $1 AND s.expires_at > now()
-	`, tokenHash[:]).Scan(
-		&userID,
-		&csrfHash,
-		&session.ExpiresAt,
-		&session.Principal.User.Email,
-		&session.Principal.User.DisplayName,
-	)
-	if errors.Is(err, pgx.ErrNoRows) {
+	sessionEntity, err := r.client.UserSession.Query().
+		Where(
+			usersession.TokenHash(tokenHash[:]),
+			usersession.ExpiresAtGT(time.Now()),
+		).
+		Only(ctx)
+	if flagstackent.IsNotFound(err) {
 		return auth.Session{}, auth.ErrSessionNotFound
 	}
 	if err != nil {
 		return auth.Session{}, fmt.Errorf("find session: %w", err)
 	}
-	if len(csrfHash) != len(session.CSRFHash) {
+	if len(sessionEntity.CsrfHash) != 32 {
 		return auth.Session{}, errors.New("stored CSRF hash has invalid length")
 	}
-	copy(session.CSRFHash[:], csrfHash)
-	session.Principal.User.ID = userID
 
-	memberships, err := r.membershipsByUserID(ctx, userID)
+	principal, err := r.principalByUserID(ctx, sessionEntity.UserID)
 	if err != nil {
 		return auth.Session{}, err
 	}
-	session.Principal.Organisations = memberships
-	return session, nil
+
+	var csrfHash [32]byte
+	copy(csrfHash[:], sessionEntity.CsrfHash)
+	return auth.Session{
+		Principal: principal,
+		CSRFHash:  csrfHash,
+		ExpiresAt: sessionEntity.ExpiresAt,
+	}, nil
 }
 
 func (r *AuthRepository) DeleteSession(ctx context.Context, tokenHash [32]byte) error {
-	if _, err := r.pool.Exec(ctx, `DELETE FROM user_sessions WHERE token_hash = $1`, tokenHash[:]); err != nil {
+	if _, err := r.client.UserSession.Delete().Where(usersession.TokenHash(tokenHash[:])).Exec(ctx); err != nil {
 		return fmt.Errorf("delete session: %w", err)
 	}
 	return nil
 }
 
-func (r *AuthRepository) principalByUserID(ctx context.Context, userID string) (auth.Principal, error) {
-	var principal auth.Principal
-	principal.User.ID = userID
-	if err := r.pool.QueryRow(ctx,
-		`SELECT email, display_name FROM users WHERE id = $1`,
-		userID,
-	).Scan(&principal.User.Email, &principal.User.DisplayName); err != nil {
+func (r *AuthRepository) principalByUserID(ctx context.Context, userID uuid.UUID) (auth.Principal, error) {
+	userEntity, err := r.client.User.Get(ctx, userID)
+	if err != nil {
 		return auth.Principal{}, fmt.Errorf("load session user: %w", err)
 	}
 
+	email := ""
+	if userEntity.Email != nil {
+		email = *userEntity.Email
+	}
 	memberships, err := r.membershipsByUserID(ctx, userID)
 	if err != nil {
 		return auth.Principal{}, err
 	}
-	principal.Organisations = memberships
-	return principal, nil
+
+	return auth.Principal{
+		User: auth.User{
+			ID:          userEntity.ID.String(),
+			Email:       email,
+			DisplayName: userEntity.DisplayName,
+		},
+		Organisations: memberships,
+	}, nil
 }
 
-func (r *AuthRepository) membershipsByUserID(ctx context.Context, userID string) ([]auth.OrganisationMembership, error) {
-	rows, err := r.pool.Query(ctx, `
-		SELECT o.id::text, o.name, o.slug, m.role
-		FROM organisation_memberships m
-		JOIN organisations o ON o.id = m.organisation_id
-		WHERE m.user_id = $1
-		ORDER BY o.name, o.id
-	`, userID)
+func (r *AuthRepository) membershipsByUserID(ctx context.Context, userID uuid.UUID) ([]auth.OrganisationMembership, error) {
+	entities, err := r.client.OrganisationMembership.Query().
+		Where(organisationmembership.UserID(userID)).
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("load organisation memberships: %w", err)
 	}
-	defer rows.Close()
 
-	memberships := make([]auth.OrganisationMembership, 0)
-	for rows.Next() {
-		var membership auth.OrganisationMembership
-		if err := rows.Scan(&membership.ID, &membership.Name, &membership.Slug, &membership.Role); err != nil {
-			return nil, fmt.Errorf("scan organisation membership: %w", err)
+	memberships := make([]auth.OrganisationMembership, 0, len(entities))
+	for _, entity := range entities {
+		organisationEntity, err := r.client.Organisation.Get(ctx, entity.OrganisationID)
+		if err != nil {
+			return nil, fmt.Errorf("load membership organisation: %w", err)
 		}
-		memberships = append(memberships, membership)
+		memberships = append(memberships, auth.OrganisationMembership{
+			ID:   organisationEntity.ID.String(),
+			Name: organisationEntity.Name,
+			Slug: organisationEntity.Slug,
+			Role: entity.Role,
+		})
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate organisation memberships: %w", err)
-	}
+
+	sort.Slice(memberships, func(i, j int) bool {
+		if memberships[i].Name == memberships[j].Name {
+			return memberships[i].ID < memberships[j].ID
+		}
+		return memberships[i].Name < memberships[j].Name
+	})
 	return memberships, nil
 }

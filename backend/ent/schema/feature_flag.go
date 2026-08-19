@@ -46,9 +46,9 @@ func (FeatureFlag) Indexes() []ent.Index {
 
 func (FeatureFlag) Annotations() []schema.Annotation {
 	return []schema.Annotation{entsql.Annotation{Table: "feature_flags", Checks: map[string]string{
-		"feature_flags_name_not_blank":        "btrim(name) <> ''",
-		"feature_flags_key_not_blank":         "btrim(key) <> ''",
-		"feature_flags_kind":                  "kind IN ('boolean', 'string', 'number', 'json')",
-		"feature_flags_default_value_type":    "kind = 'json' OR (kind = 'boolean' AND jsonb_typeof(default_value) = 'boolean') OR (kind = 'string' AND jsonb_typeof(default_value) = 'string') OR (kind = 'number' AND jsonb_typeof(default_value) = 'number')",
+		"feature_flags_name_not_blank":     "btrim(name) <> ''",
+		"feature_flags_key_not_blank":      "btrim(key) <> ''",
+		"feature_flags_kind":               "kind IN ('boolean', 'string', 'number', 'json')",
+		"feature_flags_default_value_type": "kind = 'json' OR (kind = 'boolean' AND jsonb_typeof(default_value) = 'boolean') OR (kind = 'string' AND jsonb_typeof(default_value) = 'string') OR (kind = 'number' AND jsonb_typeof(default_value) = 'number')",
 	}}}
 }

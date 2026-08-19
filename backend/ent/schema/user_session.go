@@ -38,8 +38,8 @@ func (UserSession) Indexes() []ent.Index {
 
 func (UserSession) Annotations() []schema.Annotation {
 	return []schema.Annotation{entsql.Annotation{Table: "user_sessions", Checks: map[string]string{
-		"user_sessions_token_hash_length":      "octet_length(token_hash) = 32",
-		"user_sessions_csrf_hash_length":       "octet_length(csrf_hash) = 32",
+		"user_sessions_token_hash_length":     "octet_length(token_hash) = 32",
+		"user_sessions_csrf_hash_length":      "octet_length(csrf_hash) = 32",
 		"user_sessions_expiry_after_creation": "expires_at > created_at",
 	}}}
 }

@@ -29,7 +29,7 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	entClient := database.NewEntClient(pool)
 	defer entClient.Close()
 
-	authService, err := auth.NewService(database.NewAuthRepository(pool), cfg.SessionTTL)
+	authService, err := auth.NewService(database.NewAuthRepository(pool, entClient), cfg.SessionTTL)
 	if err != nil {
 		return fmt.Errorf("create auth service: %w", err)
 	}

@@ -18,9 +18,8 @@ FlagStack is a source-available, self-hostable feature management platform focus
 
 The repository is organised as a modular monolith:
 
-- **`backend/`** — Go API and core application services.
+- **`backend/`** — Go API, application services, Ent schemas and persistence.
 - **`frontend/`** — React, TypeScript and Tailwind CSS dashboard built with Vite.
-- **`backend/migrations/`** — PostgreSQL schema migrations managed with Goose.
 - **`.devcontainer/`** — reproducible development environment.
 - **`compose.yml`** — local infrastructure dependencies.
 - **`docs/`** — architecture and development documentation.
@@ -31,7 +30,7 @@ See [`docs/architecture.md`](docs/architecture.md) for the initial architecture 
 
 The recommended development environment is the repository dev container. It includes Go, Node.js, and Docker tooling.
 
-Create the local environment file, install dependencies, start PostgreSQL, and apply migrations:
+Create the local environment file, install dependencies, start PostgreSQL, and bring the Ent-managed schema up to date:
 
 ```bash
 cp .env.example .env
@@ -55,7 +54,7 @@ Run the current checks with:
 make check
 ```
 
-Use `make db-status`, `make db-up`, and `make db-down` to manage schema migrations. Create a migration with `make db-create name=describe_change`.
+`make db-up` and `make db-migrate` both run the explicit Ent migration command. FlagStack does not automatically mutate the database schema when the API starts. Automatic destructive column and index drops are disabled; destructive schema changes must be handled deliberately when they are required.
 
 ## SDKs
 
