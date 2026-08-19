@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	coreauth "github.com/flagstack/flagstack/backend/internal/auth"
+	coreproject "github.com/flagstack/flagstack/backend/internal/project"
 )
 
 type readinessChecker interface {
@@ -13,6 +14,26 @@ type readinessChecker interface {
 }
 
 func NewRouter(logger *slog.Logger, readiness readinessChecker, authService *coreauth.Service, authOptions AuthOptions) http.Handler {
+	return newRouter(logger, readiness, authService, nil, authOptions)
+}
+
+func NewRouterWithProjects(
+	logger *slog.Logger,
+	readiness readinessChecker,
+	authService *coreauth.Service,
+	projectService *coreproject.Service,
+	authOptions AuthOptions,
+) http.Handler {
+	return newRouter(logger, readiness, authService, projectService, authOptions)
+}
+
+func newRouter(
+	logger *slog.Logger,
+	readiness readinessChecker,
+	authService *coreauth.Service,
+	projectService *coreproject.Service,
+	authOptions AuthOptions,
+) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", healthHandler)
 	mux.HandleFunc("GET /readyz", readinessHandler(readiness))
@@ -25,6 +46,13 @@ func NewRouter(logger *slog.Logger, readiness readinessChecker, authService *cor
 		mux.HandleFunc("POST /api/v1/auth/login", authHandlers.login)
 		mux.Handle("GET /api/v1/auth/me", authHandlers.requireAuth(http.HandlerFunc(authHandlers.me)))
 		mux.Handle("POST /api/v1/auth/logout", authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(authHandlers.logout))))
+
+		if projectService != nil {
+			projectHandlers := newProjectHandlers(projectService)
+			projectsPath := "/api/v1/organisations/{organisation}/projects"
+			mux.Handle("GET "+projectsPath, authHandlers.requireAuth(http.HandlerFunc(projectHandlers.list)))
+			mux.Handle("POST "+projectsPath, authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(projectHandlers.create))))
+		}
 	}
 
 	return requestLogger(logger, mux)
