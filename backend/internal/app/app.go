@@ -11,6 +11,7 @@ import (
 	"github.com/flagstack/flagstack/backend/internal/auth"
 	"github.com/flagstack/flagstack/backend/internal/config"
 	"github.com/flagstack/flagstack/backend/internal/database"
+	"github.com/flagstack/flagstack/backend/internal/environment"
 	"github.com/flagstack/flagstack/backend/internal/httpapi"
 	"github.com/flagstack/flagstack/backend/internal/project"
 )
@@ -32,12 +33,18 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("create project service: %w", err)
 	}
+	environmentService, err := environment.NewService(database.NewEnvironmentRepository(pool))
+	if err != nil {
+		return fmt.Errorf("create environment service: %w", err)
+	}
 
 	server := &http.Server{
 		Addr: cfg.HTTPAddr,
-		Handler: httpapi.NewRouterWithProjects(logger, pool, authService, projectService, httpapi.AuthOptions{
-			SecureCookies: cfg.SessionCookieSecure,
-		}),
+		Handler: httpapi.NewRouterWithServices(logger, pool, httpapi.Services{
+			Auth:         authService,
+			Projects:     projectService,
+			Environments: environmentService,
+		}, httpapi.AuthOptions{SecureCookies: cfg.SessionCookieSecure}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
