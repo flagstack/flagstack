@@ -128,11 +128,6 @@ jobs:
       - name: Validate configuration
         run: python3 -m json.tool .devcontainer/devcontainer.json >/dev/null
 
-      - name: Install ShellCheck
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y shellcheck
-
       - name: Check shell scripts
         run: shellcheck .devcontainer/post-create.sh .devcontainer/scripts/*.sh
 
