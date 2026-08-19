@@ -3,12 +3,15 @@ SHELL := /usr/bin/env bash
 GOOSE := go run github.com/pressly/goose/v3/cmd/goose@v3.27.3
 LOAD_ENV := set -a; if [ -f .env ]; then source .env; fi; set +a;
 
-.PHONY: bootstrap dev-backend dev-frontend infra-up infra-down db-up db-down db-status db-create fmt test check
+.PHONY: bootstrap ent-generate dev-backend dev-frontend infra-up infra-down db-up db-down db-status db-create fmt test check
 
-bootstrap:
+bootstrap: ent-generate
 	cd frontend && corepack enable && corepack prepare pnpm@11.22.0 --activate && pnpm install
 
-dev-backend:
+ent-generate:
+	cd backend && go generate ./ent
+
+dev-backend: ent-generate
 	$(LOAD_ENV) cd backend && go run ./cmd/flagstack
 
 dev-frontend:
@@ -36,10 +39,10 @@ db-create:
 fmt:
 	cd backend && gofmt -w .
 
-test:
+test: ent-generate
 	cd backend && go test ./...
 
-check:
+check: ent-generate
 	@test -z "$$(gofmt -l backend)" || (echo "Go files need formatting:"; gofmt -l backend; exit 1)
 	cd backend && go test ./...
 	cd frontend && pnpm typecheck
