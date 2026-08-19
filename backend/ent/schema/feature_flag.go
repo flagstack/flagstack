@@ -12,7 +12,9 @@ import (
 	"github.com/google/uuid"
 )
 
-type FeatureFlag struct { ent.Schema }
+type FeatureFlag struct {
+	ent.Schema
+}
 
 func (FeatureFlag) Fields() []ent.Field {
 	return []ent.Field{
@@ -30,5 +32,10 @@ func (FeatureFlag) Fields() []ent.Field {
 	}
 }
 
-func (FeatureFlag) Indexes() []ent.Index { return []ent.Index{index.Fields("project_id", "key").Unique()} }
-func (FeatureFlag) Annotations() []schema.Annotation { return []schema.Annotation{entsql.Annotation{Table: "feature_flags"}} }
+func (FeatureFlag) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("project_id", "key").Unique()}
+}
+
+func (FeatureFlag) Annotations() []schema.Annotation {
+	return []schema.Annotation{entsql.Annotation{Table: "feature_flags"}}
+}
