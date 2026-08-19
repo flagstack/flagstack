@@ -2,11 +2,11 @@ package schema
 
 import (
 	"encoding/json"
-	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
@@ -18,7 +18,7 @@ type FeatureFlag struct {
 
 func (FeatureFlag) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).Default(newUUIDV7).Immutable(),
+		uuidIDField(),
 		field.UUID("organisation_id", uuid.UUID{}).Immutable(),
 		field.UUID("project_id", uuid.UUID{}).Immutable(),
 		field.String("name").NotEmpty().MaxLen(160),
@@ -27,15 +27,46 @@ func (FeatureFlag) Fields() []ent.Field {
 		field.String("kind").NotEmpty().Immutable(),
 		field.JSON("default_value", json.RawMessage{}),
 		field.Time("archived_at").Optional().Nillable(),
-		field.Time("created_at").Default(time.Now).Immutable(),
-		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
+		createdAtField(),
+		updatedAtField(),
+	}
+}
+
+func (FeatureFlag) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.To("project", Project.Type).
+			Field("project_id").
+			Unique().
+			Required().
+			Immutable().
+			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.From("environment_configs", EnvironmentFlagConfig.Type).Ref("feature_flag"),
 	}
 }
 
 func (FeatureFlag) Indexes() []ent.Index {
-	return []ent.Index{index.Fields("project_id", "key").Unique()}
+	return []ent.Index{
+		index.Fields("organisation_id", "project_id", "id").Unique(),
+		index.Fields("project_id", "key").Unique(),
+		index.Fields("project_id", "created_at").
+			StorageKey("feature_flags_project_active_idx").
+			Annotations(
+				entsql.DescColumns("created_at"),
+				entsql.IndexWhere("archived_at IS NULL"),
+			),
+	}
 }
 
 func (FeatureFlag) Annotations() []schema.Annotation {
-	return []schema.Annotation{entsql.Annotation{Table: "feature_flags"}}
+	return []schema.Annotation{
+		entsql.Annotation{
+			Table: "feature_flags",
+			Checks: map[string]string{
+				"feature_flags_name_not_blank": "btrim(name) <> ''",
+				"feature_flags_key_not_blank":  "btrim(key) <> ''",
+				"feature_flags_kind":           "kind IN ('boolean', 'string', 'number', 'json')",
+				"feature_flags_default_value_type": "kind = 'json' OR (kind = 'boolean' AND jsonb_typeof(default_value) = 'boolean') OR (kind = 'string' AND jsonb_typeof(default_value) = 'string') OR (kind = 'number' AND jsonb_typeof(default_value) = 'number')",
+			},
+		},
+	}
 }

@@ -1,14 +1,12 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
-	"github.com/google/uuid"
 )
 
 type Organisation struct {
@@ -17,18 +15,35 @@ type Organisation struct {
 
 func (Organisation) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).Default(newUUIDV7).Immutable(),
+		uuidIDField(),
 		field.String("name").NotEmpty().MaxLen(160),
 		field.String("slug").NotEmpty().MaxLen(63),
-		field.Time("created_at").Default(time.Now).Immutable(),
-		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
+		createdAtField(),
+		updatedAtField(),
+	}
+}
+
+func (Organisation) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.From("memberships", OrganisationMembership.Type).Ref("organisation"),
+		edge.From("projects", Project.Type).Ref("organisation"),
 	}
 }
 
 func (Organisation) Indexes() []ent.Index {
-	return []ent.Index{index.Fields("slug").Unique()}
+	return []ent.Index{
+		index.Fields("slug").Unique(),
+	}
 }
 
 func (Organisation) Annotations() []schema.Annotation {
-	return []schema.Annotation{entsql.Annotation{Table: "organisations"}}
+	return []schema.Annotation{
+		entsql.Annotation{
+			Table: "organisations",
+			Checks: map[string]string{
+				"organisations_name_not_blank": "btrim(name) <> ''",
+				"organisations_slug_format":    "slug ~ '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'",
+			},
+		},
+	}
 }
