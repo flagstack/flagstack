@@ -83,8 +83,8 @@ jobs:
       - name: Apply migrations
         run: go run github.com/pressly/goose/v3/cmd/goose@v3.27.3 -dir migrations postgres "$DATABASE_URL" up
 
-      - name: Test database connection
-        run: go test ./internal/database -run TestOpenIntegration -count=1
+      - name: Test database integration
+        run: go test ./internal/database -count=1
 
       - name: Reverse migrations
         run: go run github.com/pressly/goose/v3/cmd/goose@v3.27.3 -dir migrations postgres "$DATABASE_URL" reset
