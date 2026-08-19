@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 	"reflect"
 	"regexp"
 	"strings"
@@ -776,7 +777,8 @@ func decodeRaw(raw json.RawMessage) (any, error) {
 	if err := decoder.Decode(&value); err != nil {
 		return nil, err
 	}
-	if decoder.More() {
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
 		return nil, fmt.Errorf("multiple JSON values are not allowed")
 	}
 	return value, nil
