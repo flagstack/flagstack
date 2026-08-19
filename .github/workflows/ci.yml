@@ -65,3 +65,26 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  devcontainer:
+    name: Dev container
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Validate configuration
+        run: python3 -m json.tool .devcontainer/devcontainer.json >/dev/null
+
+      - name: Install ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Check shell scripts
+        run: shellcheck .devcontainer/post-create.sh .devcontainer/scripts/*.sh
+
+      - name: Build dev container
+        uses: devcontainers/ci@v0.3
+        with:
+          push: never
