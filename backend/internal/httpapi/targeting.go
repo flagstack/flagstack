@@ -34,9 +34,9 @@ type segmentRequest struct {
 }
 
 type scheduleRequest struct {
-	EnvironmentID string                    `json:"environment_id"`
-	FeatureFlagID string                    `json:"feature_flag_id"`
-	ExecuteAt     time.Time                 `json:"execute_at"`
+	EnvironmentID string                      `json:"environment_id"`
+	FeatureFlagID string                      `json:"feature_flag_id"`
+	ExecuteAt     time.Time                   `json:"execute_at"`
 	Patch         coretargeting.SchedulePatch `json:"patch"`
 }
 
@@ -241,11 +241,11 @@ func (h *targetingHandlers) createScheduledChange(w http.ResponseWriter, r *http
 	}
 	authenticated, _ := authenticatedFromContext(r.Context())
 	change, err := h.service.CreateScheduledChange(r.Context(), membership.ID, r.PathValue("project"), coretargeting.CreateScheduleInput{
-		EnvironmentID: request.EnvironmentID,
-		FeatureFlagID: request.FeatureFlagID,
+		EnvironmentID:   request.EnvironmentID,
+		FeatureFlagID:   request.FeatureFlagID,
 		CreatedByUserID: authenticated.Session.Principal.User.ID,
-		ExecuteAt: request.ExecuteAt,
-		Patch: request.Patch,
+		ExecuteAt:       request.ExecuteAt,
+		Patch:           request.Patch,
 	})
 	if err != nil {
 		writeTargetingError(w, err, "Scheduled change could not be created.")
