@@ -12,9 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type FeatureFlag struct {
-	ent.Schema
-}
+type FeatureFlag struct{ ent.Schema }
 
 func (FeatureFlag) Fields() []ent.Field {
 	return []ent.Field{
@@ -27,20 +25,14 @@ func (FeatureFlag) Fields() []ent.Field {
 		field.String("kind").NotEmpty().Immutable(),
 		field.JSON("default_value", json.RawMessage{}),
 		field.Time("archived_at").Optional().Nillable(),
-		createdAtField(),
-		updatedAtField(),
+		createdAtField(), updatedAtField(),
 	}
 }
 
 func (FeatureFlag) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("project", Project.Type).
-			Field("project_id").
-			Unique().
-			Required().
-			Immutable().
-			Annotations(entsql.OnDelete(entsql.Cascade)),
-		edge.From("environment_configs", EnvironmentFlagConfig.Type).Ref("feature_flag"),
+		edge.From("project", Project.Type).Ref("feature_flags").Field("project_id").Unique().Required().Immutable().Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.To("environment_configs", EnvironmentFlagConfig.Type),
 	}
 }
 
@@ -48,25 +40,15 @@ func (FeatureFlag) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("organisation_id", "project_id", "id").Unique(),
 		index.Fields("project_id", "key").Unique(),
-		index.Fields("project_id", "created_at").
-			StorageKey("feature_flags_project_active_idx").
-			Annotations(
-				entsql.DescColumns("created_at"),
-				entsql.IndexWhere("archived_at IS NULL"),
-			),
+		index.Fields("project_id", "created_at").StorageKey("feature_flags_project_active_idx").Annotations(entsql.DescColumns("created_at"), entsql.IndexWhere("archived_at IS NULL")),
 	}
 }
 
 func (FeatureFlag) Annotations() []schema.Annotation {
-	return []schema.Annotation{
-		entsql.Annotation{
-			Table: "feature_flags",
-			Checks: map[string]string{
-				"feature_flags_name_not_blank": "btrim(name) <> ''",
-				"feature_flags_key_not_blank":  "btrim(key) <> ''",
-				"feature_flags_kind":           "kind IN ('boolean', 'string', 'number', 'json')",
-				"feature_flags_default_value_type": "kind = 'json' OR (kind = 'boolean' AND jsonb_typeof(default_value) = 'boolean') OR (kind = 'string' AND jsonb_typeof(default_value) = 'string') OR (kind = 'number' AND jsonb_typeof(default_value) = 'number')",
-			},
-		},
-	}
+	return []schema.Annotation{entsql.Annotation{Table: "feature_flags", Checks: map[string]string{
+		"feature_flags_name_not_blank":        "btrim(name) <> ''",
+		"feature_flags_key_not_blank":         "btrim(key) <> ''",
+		"feature_flags_kind":                  "kind IN ('boolean', 'string', 'number', 'json')",
+		"feature_flags_default_value_type":    "kind = 'json' OR (kind = 'boolean' AND jsonb_typeof(default_value) = 'boolean') OR (kind = 'string' AND jsonb_typeof(default_value) = 'string') OR (kind = 'number' AND jsonb_typeof(default_value) = 'number')",
+	}}}
 }

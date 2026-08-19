@@ -25,8 +25,8 @@ func (Organisation) Fields() []ent.Field {
 
 func (Organisation) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("memberships", OrganisationMembership.Type).Ref("organisation"),
-		edge.From("projects", Project.Type).Ref("organisation"),
+		edge.To("memberships", OrganisationMembership.Type),
+		edge.To("projects", Project.Type),
 	}
 }
 

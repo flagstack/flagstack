@@ -10,9 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type OrganisationMembership struct {
-	ent.Schema
-}
+type OrganisationMembership struct{ ent.Schema }
 
 func (OrganisationMembership) Fields() []ent.Field {
 	return []ent.Field{
@@ -26,35 +24,18 @@ func (OrganisationMembership) Fields() []ent.Field {
 
 func (OrganisationMembership) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("organisation", Organisation.Type).
-			Field("organisation_id").
-			Unique().
-			Required().
-			Immutable().
-			Annotations(entsql.OnDelete(entsql.Cascade)),
-		edge.To("user", User.Type).
-			Field("user_id").
-			Unique().
-			Required().
-			Immutable().
-			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.From("organisation", Organisation.Type).Ref("memberships").Field("organisation_id").Unique().Required().Immutable().Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.From("user", User.Type).Ref("memberships").Field("user_id").Unique().Required().Immutable().Annotations(entsql.OnDelete(entsql.Cascade)),
 	}
 }
 
 func (OrganisationMembership) Indexes() []ent.Index {
-	return []ent.Index{
-		index.Fields("user_id", "organisation_id").StorageKey("organisation_memberships_user_idx"),
-	}
+	return []ent.Index{index.Fields("user_id", "organisation_id").StorageKey("organisation_memberships_user_idx")}
 }
 
 func (OrganisationMembership) Annotations() []schema.Annotation {
 	return []schema.Annotation{
 		field.ID("organisation_id", "user_id"),
-		entsql.Annotation{
-			Table: "organisation_memberships",
-			Checks: map[string]string{
-				"organisation_memberships_role": "role IN ('owner', 'admin', 'developer', 'viewer')",
-			},
-		},
+		entsql.Annotation{Table: "organisation_memberships", Checks: map[string]string{"organisation_memberships_role": "role IN ('owner', 'admin', 'developer', 'viewer')"}},
 	}
 }
