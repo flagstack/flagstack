@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { Navigate, Route, Routes } from 'react-router'
 import type { BootstrapStatus, Principal } from './auth/types'
 import { AppShell } from './components/layout/AppShell'
 import { APIError, apiRequest } from './lib/api'
 import { BootstrapPage } from './pages/BootstrapPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
+import { ProjectPage } from './pages/ProjectPage'
 
 type AppState =
   | { status: 'loading' }
@@ -88,7 +90,12 @@ export function App() {
 
   return (
     <AppShell onLogout={logout} principal={state.principal}>
-      <DashboardPage organisation={organisation} />
+      <Routes>
+        <Route element={<DashboardPage organisation={organisation} />} path="/" />
+        <Route element={<DashboardPage organisation={organisation} />} path="/projects" />
+        <Route element={<ProjectPage organisation={organisation} />} path="/projects/:projectKey" />
+        <Route element={<Navigate replace to="/" />} path="*" />
+      </Routes>
     </AppShell>
   )
 }
