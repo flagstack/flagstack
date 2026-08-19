@@ -23,27 +23,27 @@ const (
 	MatchAll MatchMode = "all"
 	MatchAny MatchMode = "any"
 
-	OperatorEquals                  Operator = "equals"
-	OperatorNotEquals               Operator = "not_equals"
-	OperatorIn                      Operator = "in"
-	OperatorNotIn                   Operator = "not_in"
-	OperatorContains                Operator = "contains"
-	OperatorNotContains             Operator = "not_contains"
-	OperatorStartsWith              Operator = "starts_with"
-	OperatorEndsWith                Operator = "ends_with"
-	OperatorGreaterThan             Operator = "greater_than"
-	OperatorGreaterThanOrEqual      Operator = "greater_than_or_equal"
-	OperatorLessThan                Operator = "less_than"
-	OperatorLessThanOrEqual         Operator = "less_than_or_equal"
-	OperatorExists                  Operator = "exists"
-	OperatorNotExists               Operator = "not_exists"
-	OperatorMatchesRegex            Operator = "matches_regex"
-	OperatorSemverGreaterThan       Operator = "semver_greater_than"
+	OperatorEquals                   Operator = "equals"
+	OperatorNotEquals                Operator = "not_equals"
+	OperatorIn                       Operator = "in"
+	OperatorNotIn                    Operator = "not_in"
+	OperatorContains                 Operator = "contains"
+	OperatorNotContains              Operator = "not_contains"
+	OperatorStartsWith               Operator = "starts_with"
+	OperatorEndsWith                 Operator = "ends_with"
+	OperatorGreaterThan              Operator = "greater_than"
+	OperatorGreaterThanOrEqual       Operator = "greater_than_or_equal"
+	OperatorLessThan                 Operator = "less_than"
+	OperatorLessThanOrEqual          Operator = "less_than_or_equal"
+	OperatorExists                   Operator = "exists"
+	OperatorNotExists                Operator = "not_exists"
+	OperatorMatchesRegex             Operator = "matches_regex"
+	OperatorSemverGreaterThan        Operator = "semver_greater_than"
 	OperatorSemverGreaterThanOrEqual Operator = "semver_greater_than_or_equal"
-	OperatorSemverLessThan          Operator = "semver_less_than"
-	OperatorSemverLessThanOrEqual   Operator = "semver_less_than_or_equal"
-	OperatorInSegment               Operator = "in_segment"
-	OperatorNotInSegment            Operator = "not_in_segment"
+	OperatorSemverLessThan           Operator = "semver_less_than"
+	OperatorSemverLessThanOrEqual    Operator = "semver_less_than_or_equal"
+	OperatorInSegment                Operator = "in_segment"
+	OperatorNotInSegment             Operator = "not_in_segment"
 )
 
 const (
@@ -100,9 +100,9 @@ type Policy struct {
 }
 
 type Segment struct {
-	Key         string      `json:"key"`
-	Name        string      `json:"name"`
-	Match       MatchMode   `json:"match"`
+	Key        string      `json:"key"`
+	Name       string      `json:"name"`
+	Match      MatchMode   `json:"match"`
 	Conditions []Condition `json:"conditions"`
 }
 
