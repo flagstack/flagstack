@@ -17,7 +17,8 @@ type LocalCredential struct {
 
 func (LocalCredential) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("user_id", uuid.UUID{}).Immutable(),
+		uuidIDField(),
+		field.UUID("user_id", uuid.UUID{}).Unique().Immutable(),
 		field.String("password_hash").NotEmpty(),
 		createdAtField(),
 		field.Time("password_changed_at").
@@ -39,7 +40,6 @@ func (LocalCredential) Edges() []ent.Edge {
 
 func (LocalCredential) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		field.ID("user_id"),
 		entsql.Annotation{
 			Table: "local_credentials",
 			Checks: map[string]string{
