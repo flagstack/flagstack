@@ -22,14 +22,15 @@ type createFeatureFlagRequest struct {
 }
 
 type featureFlagResponse struct {
-	ID           string          `json:"id"`
-	ProjectID    string          `json:"project_id"`
-	Name         string          `json:"name"`
-	Key          string          `json:"key"`
-	Description  string          `json:"description"`
-	Kind         string          `json:"kind"`
-	DefaultValue json.RawMessage `json:"default_value"`
-	CreatedAt    time.Time       `json:"created_at"`
+	ID            string          `json:"id"`
+	ProjectID     string          `json:"project_id"`
+	Name          string          `json:"name"`
+	Key           string          `json:"key"`
+	Description   string          `json:"description"`
+	Kind          string          `json:"kind"`
+	DefaultValue  json.RawMessage `json:"default_value"`
+	ClientVisible bool            `json:"client_visible"`
+	CreatedAt     time.Time       `json:"created_at"`
 }
 
 type featureFlagListResponse struct {
@@ -104,13 +105,14 @@ func (h *featureFlagHandlers) create(w http.ResponseWriter, r *http.Request) {
 
 func featureFlagFromCore(flag corefeatureflag.FeatureFlag) featureFlagResponse {
 	return featureFlagResponse{
-		ID:           flag.ID,
-		ProjectID:    flag.ProjectID,
-		Name:         flag.Name,
-		Key:          flag.Key,
-		Description:  flag.Description,
-		Kind:         flag.Kind,
-		DefaultValue: flag.DefaultValue,
-		CreatedAt:    flag.CreatedAt,
+		ID:            flag.ID,
+		ProjectID:     flag.ProjectID,
+		Name:          flag.Name,
+		Key:           flag.Key,
+		Description:   flag.Description,
+		Kind:          flag.Kind,
+		DefaultValue:  flag.DefaultValue,
+		ClientVisible: flag.ClientVisible,
+		CreatedAt:     flag.CreatedAt,
 	}
 }

@@ -55,17 +55,7 @@ func (r *FeatureFlagRepository) List(ctx context.Context, organisationID, projec
 
 	flags := make([]corefeatureflag.FeatureFlag, 0, len(entities))
 	for _, entity := range entities {
-		flags = append(flags, corefeatureflag.FeatureFlag{
-			ID:             entity.ID.String(),
-			OrganisationID: entity.OrganisationID.String(),
-			ProjectID:      entity.ProjectID.String(),
-			Name:           entity.Name,
-			Key:            entity.Key,
-			Description:    entity.Description,
-			Kind:           entity.Kind,
-			DefaultValue:   entity.DefaultValue,
-			CreatedAt:      entity.CreatedAt,
-		})
+		flags = append(flags, featureFlagFromEntity(entity))
 	}
 	return flags, nil
 }
@@ -106,6 +96,10 @@ func (r *FeatureFlagRepository) Create(ctx context.Context, organisationID, proj
 		return corefeatureflag.FeatureFlag{}, fmt.Errorf("create feature flag: %w", err)
 	}
 
+	return featureFlagFromEntity(entity), nil
+}
+
+func featureFlagFromEntity(entity *flagstackent.FeatureFlag) corefeatureflag.FeatureFlag {
 	return corefeatureflag.FeatureFlag{
 		ID:             entity.ID.String(),
 		OrganisationID: entity.OrganisationID.String(),
@@ -115,6 +109,7 @@ func (r *FeatureFlagRepository) Create(ctx context.Context, organisationID, proj
 		Description:    entity.Description,
 		Kind:           entity.Kind,
 		DefaultValue:   entity.DefaultValue,
+		ClientVisible:  entity.ClientVisible,
 		CreatedAt:      entity.CreatedAt,
-	}, nil
+	}
 }
