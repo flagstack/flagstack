@@ -28,6 +28,7 @@ func (User) Edges() []ent.Edge {
 		edge.To("memberships", OrganisationMembership.Type),
 		edge.To("local_credential", LocalCredential.Type).Unique(),
 		edge.To("sessions", UserSession.Type),
+		edge.To("scheduled_flag_changes", ScheduledFlagChange.Type),
 	}
 }
 
