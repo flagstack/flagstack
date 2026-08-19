@@ -184,7 +184,7 @@ func TestConfigurationPrunesUnreferencedSegmentsTransitively(t *testing.T) {
 			Policy: evaluation.Policy{Rules: []evaluation.Rule{{
 				ID: "staff-rule", Match: evaluation.MatchAll,
 				Conditions: []evaluation.Condition{{Operator: evaluation.OperatorInSegment, Value: segmentRef("staff")}},
-				Outcome: evaluation.Outcome{Variant: "on"},
+				Outcome:    evaluation.Outcome{Variant: "on"},
 			}}},
 		}},
 		Segments: []evaluation.Segment{
