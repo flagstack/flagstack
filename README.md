@@ -16,15 +16,49 @@ FlagStack is a source-available, self-hostable feature management platform focus
 
 ## Repository
 
-This repository will contain the main FlagStack application, including:
+The repository is organised as a modular monolith:
 
-- **Backend** — Go API and core services.
-- **Frontend** — web dashboard for managing organisations, projects, environments and feature flags.
-- **Self-hosting** — Docker Compose and deployment configuration.
-- **Database** — schema, migrations and persistence code.
-- **Realtime delivery** — configuration distribution to FlagStack SDKs.
+- **`backend/`** — Go API and core application services.
+- **`frontend/`** — React and TypeScript dashboard built with Vite.
+- **`backend/migrations/`** — PostgreSQL schema migrations.
+- **`.devcontainer/`** — reproducible development environment.
+- **`compose.yml`** — local infrastructure dependencies.
+- **`docs/`** — architecture and development documentation.
 
-The exact structure will evolve as development begins.
+See [`docs/architecture.md`](docs/architecture.md) for the initial architecture and package-boundary decisions.
+
+## Development
+
+The recommended development environment is the repository dev container. It includes Go, Node.js, and Docker tooling.
+
+Start PostgreSQL:
+
+```bash
+docker compose up -d postgres
+```
+
+Install frontend dependencies:
+
+```bash
+make bootstrap
+```
+
+Run the API and frontend in separate terminals:
+
+```bash
+make dev-backend
+make dev-frontend
+```
+
+The API listens on `http://localhost:8080` and exposes health endpoints at `/healthz` and `/api/v1/health`. The frontend development server listens on `http://localhost:5173` and proxies `/api` requests to the API.
+
+Run the current checks with:
+
+```bash
+make check
+```
+
+Copy `.env.example` to `.env` when local configuration overrides are needed.
 
 ## SDKs
 
