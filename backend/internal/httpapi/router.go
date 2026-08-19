@@ -8,6 +8,7 @@ import (
 	coreauth "github.com/flagstack/flagstack/backend/internal/auth"
 	coreenvironment "github.com/flagstack/flagstack/backend/internal/environment"
 	corefeatureflag "github.com/flagstack/flagstack/backend/internal/featureflag"
+	coreflagconfig "github.com/flagstack/flagstack/backend/internal/flagconfig"
 	coreproject "github.com/flagstack/flagstack/backend/internal/project"
 )
 
@@ -20,6 +21,7 @@ type Services struct {
 	Projects     *coreproject.Service
 	Environments *coreenvironment.Service
 	FeatureFlags *corefeatureflag.Service
+	FlagConfigs  *coreflagconfig.Service
 }
 
 func NewRouter(logger *slog.Logger, readiness readinessChecker, authService *coreauth.Service, authOptions AuthOptions) http.Handler {
@@ -59,6 +61,14 @@ func NewRouterWithServices(logger *slog.Logger, readiness readinessChecker, serv
 			featureFlagsPath := "/api/v1/organisations/{organisation}/projects/{project}/feature-flags"
 			mux.Handle("GET "+featureFlagsPath, authHandlers.requireAuth(http.HandlerFunc(featureFlagHandlers.list)))
 			mux.Handle("POST "+featureFlagsPath, authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(featureFlagHandlers.create))))
+		}
+
+		if services.FlagConfigs != nil {
+			flagConfigHandlers := newFlagConfigHandlers(services.FlagConfigs)
+			flagConfigsPath := "/api/v1/organisations/{organisation}/projects/{project}/flag-configs"
+			flagConfigPath := "/api/v1/organisations/{organisation}/projects/{project}/environments/{environment}/feature-flags/{featureFlag}"
+			mux.Handle("GET "+flagConfigsPath, authHandlers.requireAuth(http.HandlerFunc(flagConfigHandlers.list)))
+			mux.Handle("PUT "+flagConfigPath, authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(flagConfigHandlers.setEnabled))))
 		}
 	}
 
