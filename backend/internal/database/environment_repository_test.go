@@ -25,6 +25,9 @@ func TestEnvironmentRepositoryIntegration(t *testing.T) {
 	}
 	defer pool.Close()
 
+	entClient := NewEntClient(pool)
+	defer entClient.Close()
+
 	if _, err := pool.Exec(ctx, `TRUNCATE projects, organisations CASCADE`); err != nil {
 		t.Fatalf("reset environment tables: %v", err)
 	}
@@ -43,7 +46,7 @@ func TestEnvironmentRepositoryIntegration(t *testing.T) {
 		t.Fatalf("create project: %v", err)
 	}
 
-	repository := NewEnvironmentRepository(pool)
+	repository := NewEnvironmentRepository(entClient)
 	created, err := repository.Create(ctx, organisationID, projectID, coreenvironment.CreateInput{
 		Name:        "Production",
 		Key:         "production",

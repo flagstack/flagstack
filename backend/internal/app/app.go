@@ -37,11 +37,11 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("create project service: %w", err)
 	}
-	environmentService, err := environment.NewService(database.NewEnvironmentRepository(pool))
+	environmentService, err := environment.NewService(database.NewEnvironmentRepository(entClient))
 	if err != nil {
 		return fmt.Errorf("create environment service: %w", err)
 	}
-	featureFlagService, err := featureflag.NewService(database.NewFeatureFlagRepository(pool))
+	featureFlagService, err := featureflag.NewService(database.NewFeatureFlagRepository(entClient))
 	if err != nil {
 		return fmt.Errorf("create feature flag service: %w", err)
 	}
