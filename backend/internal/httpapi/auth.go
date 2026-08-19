@@ -24,9 +24,9 @@ type AuthOptions struct {
 }
 
 type authHandlers struct {
-	logger         *slog.Logger
-	service        *coreauth.Service
-	secureCookies  bool
+	logger        *slog.Logger
+	service       *coreauth.Service
+	secureCookies bool
 }
 
 type authenticatedRequest struct {
@@ -257,7 +257,7 @@ func principalFromCore(principal coreauth.Principal) principalResponse {
 		})
 	}
 	return principalResponse{
-		User: userResponse{ID: principal.User.ID, Email: principal.User.Email, DisplayName: principal.User.DisplayName},
+		User:          userResponse{ID: principal.User.ID, Email: principal.User.Email, DisplayName: principal.User.DisplayName},
 		Organisations: organisations,
 	}
 }

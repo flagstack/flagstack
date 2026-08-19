@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	defaultHTTPAddr           = ":8080"
-	defaultLogLevel           = "info"
-	defaultSessionTTL         = 7 * 24 * time.Hour
+	defaultHTTPAddr            = ":8080"
+	defaultLogLevel            = "info"
+	defaultSessionTTL          = 7 * 24 * time.Hour
 	defaultSessionCookieSecure = true
 )
 
