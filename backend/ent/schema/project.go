@@ -1,11 +1,10 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 	"github.com/google/uuid"
@@ -17,21 +16,51 @@ type Project struct {
 
 func (Project) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).Default(newUUIDV7).Immutable(),
+		uuidIDField(),
 		field.UUID("organisation_id", uuid.UUID{}).Immutable(),
 		field.String("name").NotEmpty().MaxLen(160),
 		field.String("key").NotEmpty().MaxLen(64).Immutable(),
 		field.String("description").Default("").MaxLen(2000),
 		field.Time("archived_at").Optional().Nillable(),
-		field.Time("created_at").Default(time.Now).Immutable(),
-		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
+		createdAtField(),
+		updatedAtField(),
+	}
+}
+
+func (Project) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.To("organisation", Organisation.Type).
+			Field("organisation_id").
+			Unique().
+			Required().
+			Immutable().
+			Annotations(entsql.OnDelete(entsql.Cascade)),
+		edge.From("environments", Environment.Type).Ref("project"),
+		edge.From("feature_flags", FeatureFlag.Type).Ref("project"),
 	}
 }
 
 func (Project) Indexes() []ent.Index {
-	return []ent.Index{index.Fields("organisation_id", "key").Unique()}
+	return []ent.Index{
+		index.Fields("organisation_id", "id").Unique(),
+		index.Fields("organisation_id", "key").Unique(),
+		index.Fields("organisation_id", "created_at").
+			StorageKey("projects_organisation_active_idx").
+			Annotations(
+				entsql.DescColumns("created_at"),
+				entsql.IndexWhere("archived_at IS NULL"),
+			),
+	}
 }
 
 func (Project) Annotations() []schema.Annotation {
-	return []schema.Annotation{entsql.Annotation{Table: "projects"}}
+	return []schema.Annotation{
+		entsql.Annotation{
+			Table: "projects",
+			Checks: map[string]string{
+				"projects_name_not_blank": "btrim(name) <> ''",
+				"projects_key_not_blank":  "btrim(key) <> ''",
+			},
+		},
+	}
 }
