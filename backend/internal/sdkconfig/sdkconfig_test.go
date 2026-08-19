@@ -13,9 +13,9 @@ import (
 )
 
 type fakeRepository struct {
-	records        map[string]CredentialRecord
-	credentials    map[string]Credential
-	clientKeys     map[string]string
+	records       map[string]CredentialRecord
+	credentials   map[string]Credential
+	clientKeys    map[string]string
 	configuration Configuration
 }
 
