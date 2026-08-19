@@ -26,6 +26,9 @@ func TestFeatureFlagRepositoryIntegration(t *testing.T) {
 	}
 	defer pool.Close()
 
+	entClient := NewEntClient(pool)
+	defer entClient.Close()
+
 	if _, err := pool.Exec(ctx, `TRUNCATE feature_flags, projects, organisations CASCADE`); err != nil {
 		t.Fatalf("reset feature flag tables: %v", err)
 	}
@@ -42,7 +45,7 @@ func TestFeatureFlagRepositoryIntegration(t *testing.T) {
 		t.Fatalf("create project: %v", err)
 	}
 
-	repository := NewFeatureFlagRepository(pool)
+	repository := NewFeatureFlagRepository(entClient)
 	created, err := repository.Create(ctx, organisationID, projectID, corefeatureflag.CreateInput{
 		Name:         "Checkout flow",
 		Key:          "checkout.new-flow",
