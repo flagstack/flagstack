@@ -12,6 +12,7 @@ import (
 	"github.com/flagstack/flagstack/backend/internal/config"
 	"github.com/flagstack/flagstack/backend/internal/database"
 	"github.com/flagstack/flagstack/backend/internal/environment"
+	"github.com/flagstack/flagstack/backend/internal/featureflag"
 	"github.com/flagstack/flagstack/backend/internal/httpapi"
 	"github.com/flagstack/flagstack/backend/internal/project"
 )
@@ -37,6 +38,10 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("create environment service: %w", err)
 	}
+	featureFlagService, err := featureflag.NewService(database.NewFeatureFlagRepository(pool))
+	if err != nil {
+		return fmt.Errorf("create feature flag service: %w", err)
+	}
 
 	server := &http.Server{
 		Addr: cfg.HTTPAddr,
@@ -44,6 +49,7 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 			Auth:         authService,
 			Projects:     projectService,
 			Environments: environmentService,
+			FeatureFlags: featureFlagService,
 		}, httpapi.AuthOptions{SecureCookies: cfg.SessionCookieSecure}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
