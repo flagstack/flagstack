@@ -82,6 +82,7 @@ func ValidatePolicySegments(policy Policy, segments []Segment) error {
 				return fmt.Errorf("rule %q references unknown segment %q", rule.ID, referenced)
 			}
 		}
+	}
 	return nil
 }
 
