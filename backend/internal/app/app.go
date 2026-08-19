@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/flagstack/flagstack/backend/internal/auth"
 	"github.com/flagstack/flagstack/backend/internal/config"
 	"github.com/flagstack/flagstack/backend/internal/database"
 	"github.com/flagstack/flagstack/backend/internal/httpapi"
@@ -22,9 +23,16 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	}
 	defer pool.Close()
 
+	authService, err := auth.NewService(database.NewAuthRepository(pool), cfg.SessionTTL)
+	if err != nil {
+		return fmt.Errorf("create auth service: %w", err)
+	}
+
 	server := &http.Server{
-		Addr:              cfg.HTTPAddr,
-		Handler:           httpapi.NewRouter(logger, pool),
+		Addr: cfg.HTTPAddr,
+		Handler: httpapi.NewRouter(logger, pool, authService, httpapi.AuthOptions{
+			SecureCookies: cfg.SessionCookieSecure,
+		}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

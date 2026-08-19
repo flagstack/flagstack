@@ -21,7 +21,7 @@ func (f fakeReadiness) Ping(context.Context) error {
 
 func TestHealthEndpoint(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	server := httptest.NewServer(NewRouter(logger, fakeReadiness{}))
+	server := httptest.NewServer(NewRouter(logger, fakeReadiness{}, nil, AuthOptions{}))
 	defer server.Close()
 
 	response, err := http.Get(server.URL + "/api/v1/health")
@@ -62,7 +62,7 @@ func TestReadinessEndpoint(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, "/readyz", nil)
 			response := httptest.NewRecorder()
 
-			NewRouter(logger, tt.readiness).ServeHTTP(response, request)
+			NewRouter(logger, tt.readiness, nil, AuthOptions{}).ServeHTTP(response, request)
 
 			if response.Code != tt.wantStatus {
 				t.Fatalf("status = %d, want %d", response.Code, tt.wantStatus)
