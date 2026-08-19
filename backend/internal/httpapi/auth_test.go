@@ -70,7 +70,7 @@ func TestBootstrapSessionAndLogoutFlow(t *testing.T) {
 	repository := &fakeAuthRepository{
 		bootstrapRequired: true,
 		principal: coreauth.Principal{
-			User: coreauth.User{ID: "user-1", Email: "admin@example.com", DisplayName: "Admin"},
+			User:          coreauth.User{ID: "user-1", Email: "admin@example.com", DisplayName: "Admin"},
 			Organisations: []coreauth.OrganisationMembership{{ID: "org-1", Name: "Example", Slug: "example", Role: "owner"}},
 		},
 		sessions: make(map[[32]byte]coreauth.Session),
