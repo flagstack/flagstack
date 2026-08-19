@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	ErrCredentialNotFound = errors.New("SDK credential not found")
+	ErrCredentialNotFound  = errors.New("SDK credential not found")
 	ErrEnvironmentNotFound = errors.New("environment not found")
 	ErrFeatureFlagNotFound = errors.New("feature flag not found")
 	ErrInvalidCredential   = errors.New("invalid SDK credential")
@@ -84,7 +84,7 @@ type Flag struct {
 	Enabled      bool                 `json:"enabled"`
 	Variants     []evaluation.Variant `json:"variants,omitempty"`
 	Policy       evaluation.Policy    `json:"policy,omitempty"`
-	Revision     int                  `json:"revision"`
+	Revision     int64                `json:"revision"`
 }
 
 type Configuration struct {

@@ -10,6 +10,7 @@ import (
 	corefeatureflag "github.com/flagstack/flagstack/backend/internal/featureflag"
 	coreflagconfig "github.com/flagstack/flagstack/backend/internal/flagconfig"
 	coreproject "github.com/flagstack/flagstack/backend/internal/project"
+	coresdkconfig "github.com/flagstack/flagstack/backend/internal/sdkconfig"
 	coretargeting "github.com/flagstack/flagstack/backend/internal/targeting"
 )
 
@@ -24,6 +25,7 @@ type Services struct {
 	FeatureFlags *corefeatureflag.Service
 	FlagConfigs  *coreflagconfig.Service
 	Targeting    *coretargeting.Service
+	SDKConfig    *coresdkconfig.Service
 }
 
 func NewRouter(logger *slog.Logger, readiness readinessChecker, authService *coreauth.Service, authOptions AuthOptions) http.Handler {
@@ -35,6 +37,12 @@ func NewRouterWithServices(logger *slog.Logger, readiness readinessChecker, serv
 	mux.HandleFunc("GET /healthz", healthHandler)
 	mux.HandleFunc("GET /readyz", readinessHandler(readiness))
 	mux.HandleFunc("GET /api/v1/health", healthHandler)
+
+	var sdkHandlers *sdkConfigHandlers
+	if services.SDKConfig != nil {
+		sdkHandlers = newSDKConfigHandlers(services.SDKConfig)
+		mux.Handle("GET /sdk/v1/config", http.HandlerFunc(sdkHandlers.configuration))
+	}
 
 	if services.Auth != nil {
 		authHandlers := newAuthHandlers(logger, services.Auth, authOptions)
@@ -91,6 +99,19 @@ func NewRouterWithServices(logger *slog.Logger, readiness readinessChecker, serv
 			mux.Handle("GET "+schedulesPath, authHandlers.requireAuth(http.HandlerFunc(targetingHandlers.listScheduledChanges)))
 			mux.Handle("POST "+schedulesPath, authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(targetingHandlers.createScheduledChange))))
 			mux.Handle("POST "+schedulesPath+"/{schedule}/cancel", authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(targetingHandlers.cancelScheduledChange))))
+		}
+
+		if sdkHandlers != nil {
+			projectBase := "/api/v1/organisations/{organisation}/projects/{project}"
+			credentialsPath := projectBase + "/sdk-credentials"
+			createCredentialPath := projectBase + "/environments/{environment}/sdk-credentials"
+			credentialPath := credentialsPath + "/{credential}"
+			clientVisibilityPath := projectBase + "/feature-flags/{featureFlag}/client-visibility"
+
+			mux.Handle("GET "+credentialsPath, authHandlers.requireAuth(http.HandlerFunc(sdkHandlers.listCredentials)))
+			mux.Handle("POST "+createCredentialPath, authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(sdkHandlers.createCredential))))
+			mux.Handle("POST "+credentialPath+"/revoke", authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(sdkHandlers.revokeCredential))))
+			mux.Handle("PUT "+clientVisibilityPath, authHandlers.requireAuth(authHandlers.requireCSRF(http.HandlerFunc(sdkHandlers.setClientVisible))))
 		}
 	}
 
