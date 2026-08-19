@@ -3,6 +3,7 @@ import type { SVGProps } from 'react'
 export type IconName =
   | 'activity'
   | 'bell'
+  | 'chevron-down'
   | 'chevron-left'
   | 'chevron-right'
   | 'close'
@@ -11,6 +12,7 @@ export type IconName =
   | 'environment'
   | 'flag'
   | 'key'
+  | 'logout'
   | 'menu'
   | 'project'
   | 'search'
@@ -28,6 +30,7 @@ const paths: Record<IconName, string[]> = {
     'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9',
     'M10 21h4',
   ],
+  'chevron-down': ['m6 9 6 6 6-6'],
   'chevron-left': ['m15 18-6-6 6-6'],
   'chevron-right': ['m9 18 6-6-6-6'],
   close: ['M6 6l12 12M18 6 6 18'],
@@ -48,6 +51,7 @@ const paths: Record<IconName, string[]> = {
     'M15.5 7.5a4.5 4.5 0 1 1-3.2 7.7L9 18.5V21H6.5v-2.5H4V16l4.3-4.3a4.5 4.5 0 0 1 7.2-4.2z',
     'M15.5 7.5h.01',
   ],
+  logout: ['M10 17l5-5-5-5', 'M15 12H3', 'M14 3h4a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3h-4'],
   menu: ['M4 7h16M4 12h16M4 17h16'],
   project: ['M3 7h7l2 2h9v10H3z'],
   search: ['M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z', 'm20 20-4-4'],

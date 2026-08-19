@@ -1,3 +1,4 @@
+import type { OrganisationMembership } from '../../auth/types'
 import { Icon, type IconName } from '../icons'
 
 interface NavigationItem {
@@ -15,6 +16,7 @@ interface SidebarProps {
   collapsed: boolean
   mobileOpen: boolean
   onCloseMobile: () => void
+  organisation?: OrganisationMembership
 }
 
 const navigation: NavigationGroup[] = [
@@ -34,10 +36,12 @@ const navigation: NavigationGroup[] = [
 
 function SidebarContent({
   collapsed,
+  organisation,
   onNavigate,
   showCloseButton = false,
 }: {
   collapsed: boolean
+  organisation?: OrganisationMembership
   onNavigate?: () => void
   showCloseButton?: boolean
 }) {
@@ -117,14 +121,16 @@ function SidebarContent({
           <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
             <div className="flex items-center gap-2 text-xs font-medium text-slate-300">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 ring-4 ring-emerald-400/10" />
-              Local development
+              <span className="truncate">{organisation?.name ?? 'No organisation'}</span>
             </div>
-            <p className="mt-1 text-[11px] leading-4 text-slate-600">Self-hosted core · Early preview</p>
+            <p className="mt-1 truncate text-[11px] leading-4 text-slate-600">
+              {organisation ? `${organisation.role} · ${organisation.slug}` : 'No membership available'}
+            </p>
           </div>
         ) : (
           <span
             className="mx-auto block h-1.5 w-1.5 rounded-full bg-emerald-400 ring-4 ring-emerald-400/10"
-            title="Local development"
+            title={organisation?.name ?? 'No organisation'}
           />
         )}
       </div>
@@ -132,7 +138,7 @@ function SidebarContent({
   )
 }
 
-export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) {
+export function Sidebar({ collapsed, mobileOpen, onCloseMobile, organisation }: SidebarProps) {
   return (
     <>
       <aside
@@ -140,7 +146,7 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) 
           collapsed ? 'w-20' : 'w-72'
         }`}
       >
-        <SidebarContent collapsed={collapsed} />
+        <SidebarContent collapsed={collapsed} organisation={organisation} />
       </aside>
 
       {mobileOpen ? (
@@ -152,7 +158,7 @@ export function Sidebar({ collapsed, mobileOpen, onCloseMobile }: SidebarProps) 
             type="button"
           />
           <aside className="relative flex h-full w-[min(88vw,20rem)] flex-col border-r border-slate-800 bg-slate-950 shadow-2xl shadow-black/50">
-            <SidebarContent collapsed={false} onNavigate={onCloseMobile} showCloseButton />
+            <SidebarContent organisation={organisation} collapsed={false} onNavigate={onCloseMobile} showCloseButton />
           </aside>
         </div>
       ) : null}
