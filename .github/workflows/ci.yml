@@ -32,14 +32,10 @@ jobs:
       - name: Check module metadata
         run: go mod tidy -diff
 
-      - name: Check formatting
+      - name: Show formatting diff
         run: |
-          unformatted=$(gofmt -l .)
-          if [ -n "$unformatted" ]; then
-            echo "The following files need gofmt:"
-            echo "$unformatted"
-            exit 1
-          fi
+          gofmt -d internal/evaluation
+          exit 1
 
       - name: Test
         run: go test ./...
