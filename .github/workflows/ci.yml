@@ -26,6 +26,9 @@ jobs:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
 
+      - name: Generate Ent client
+        run: go generate ./ent
+
       - name: Check module metadata
         run: go mod tidy -diff
 
@@ -73,6 +76,9 @@ jobs:
         with:
           go-version-file: backend/go.mod
           cache-dependency-path: backend/go.sum
+
+      - name: Generate Ent client
+        run: go generate ./ent
 
       - name: Apply migrations
         run: go run github.com/pressly/goose/v3/cmd/goose@v3.27.3 -dir migrations postgres "$DATABASE_URL" up

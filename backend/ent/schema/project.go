@@ -1,0 +1,37 @@
+package schema
+
+import (
+	"time"
+
+	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema"
+	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
+	"github.com/google/uuid"
+)
+
+type Project struct {
+	ent.Schema
+}
+
+func (Project) Fields() []ent.Field {
+	return []ent.Field{
+		field.UUID("id", uuid.UUID{}).Default(newUUIDV7).Immutable(),
+		field.UUID("organisation_id", uuid.UUID{}).Immutable(),
+		field.String("name").NotEmpty().MaxLen(160),
+		field.String("key").NotEmpty().MaxLen(64).Immutable(),
+		field.String("description").Default("").MaxLen(2000),
+		field.Time("archived_at").Optional().Nillable(),
+		field.Time("created_at").Default(time.Now).Immutable(),
+		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
+	}
+}
+
+func (Project) Indexes() []ent.Index {
+	return []ent.Index{index.Fields("organisation_id", "key").Unique()}
+}
+
+func (Project) Annotations() []schema.Annotation {
+	return []schema.Annotation{entsql.Annotation{Table: "projects"}}
+}

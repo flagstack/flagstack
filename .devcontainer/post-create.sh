@@ -20,6 +20,7 @@ echo "Downloading Go modules..."
 (
     cd backend
     go mod download
+    go generate ./ent
 )
 
 git config --global --add safe.directory /workspace
