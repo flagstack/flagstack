@@ -41,7 +41,7 @@ func NewRouterWithServices(logger *slog.Logger, readiness readinessChecker, serv
 	var sdkHandlers *sdkConfigHandlers
 	if services.SDKConfig != nil {
 		sdkHandlers = newSDKConfigHandlers(services.SDKConfig)
-		mux.Handle("GET /sdk/v1/config", http.HandlerFunc(sdkHandlers.configuration))
+		mux.Handle("/sdk/v1/config", http.HandlerFunc(sdkHandlers.configuration))
 	}
 
 	if services.Auth != nil {
