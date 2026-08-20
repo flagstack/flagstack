@@ -44,6 +44,7 @@ func ValidateSegmentSet(segments []Segment) error {
 			if _, exists := index[referenced]; !exists {
 				return fmt.Errorf("segment %q references unknown segment %q", segment.Key, referenced)
 			}
+		}
 	}
 
 	visiting := make(map[string]bool, len(index))
