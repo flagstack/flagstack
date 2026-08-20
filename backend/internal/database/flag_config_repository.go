@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
 	entenvironment "github.com/switchonyourcode/switchonyourcode/backend/ent/environment"
 	entenvironmentflagconfig "github.com/switchonyourcode/switchonyourcode/backend/ent/environmentflagconfig"
 	entfeatureflag "github.com/switchonyourcode/switchonyourcode/backend/ent/featureflag"
 	coreflagconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/flagconfig"
-	"github.com/google/uuid"
 )
 
 type FlagConfigRepository struct {

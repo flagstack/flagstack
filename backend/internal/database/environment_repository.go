@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
 	entenvironment "github.com/switchonyourcode/switchonyourcode/backend/ent/environment"
 	entproject "github.com/switchonyourcode/switchonyourcode/backend/ent/project"
 	coreenvironment "github.com/switchonyourcode/switchonyourcode/backend/internal/environment"
-	"github.com/google/uuid"
 )
 
 type EnvironmentRepository struct {

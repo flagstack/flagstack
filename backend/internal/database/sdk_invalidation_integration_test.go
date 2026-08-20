@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	coresdkconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
 	"github.com/jackc/pgx/v5"
+	coresdkconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
 )
 
 func TestSDKInvalidationTriggersIntegration(t *testing.T) {

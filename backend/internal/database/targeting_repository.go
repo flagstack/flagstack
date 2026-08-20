@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/google/uuid"
 	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
 	entenvironment "github.com/switchonyourcode/switchonyourcode/backend/ent/environment"
 	entenvironmentflagconfig "github.com/switchonyourcode/switchonyourcode/backend/ent/environmentflagconfig"
@@ -17,7 +18,6 @@ import (
 	entsegment "github.com/switchonyourcode/switchonyourcode/backend/ent/segment"
 	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
 	coretargeting "github.com/switchonyourcode/switchonyourcode/backend/internal/targeting"
-	"github.com/google/uuid"
 )
 
 const scheduleClaimLease = 2 * time.Minute

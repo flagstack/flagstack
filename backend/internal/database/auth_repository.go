@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
 	"github.com/switchonyourcode/switchonyourcode/backend/ent/localcredential"
 	"github.com/switchonyourcode/switchonyourcode/backend/ent/organisationmembership"
 	"github.com/switchonyourcode/switchonyourcode/backend/ent/user"
 	"github.com/switchonyourcode/switchonyourcode/backend/ent/usersession"
 	"github.com/switchonyourcode/switchonyourcode/backend/internal/auth"
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const bootstrapAdvisoryLock int64 = 0x466c616753746163

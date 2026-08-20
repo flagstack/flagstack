@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
 	entenvironment "github.com/switchonyourcode/switchonyourcode/backend/ent/environment"
 	entfeatureflag "github.com/switchonyourcode/switchonyourcode/backend/ent/featureflag"
 	entproject "github.com/switchonyourcode/switchonyourcode/backend/ent/project"
 	coreproject "github.com/switchonyourcode/switchonyourcode/backend/internal/project"
-	"github.com/google/uuid"
 )
 
 type ProjectRepository struct {

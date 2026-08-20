@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
 	"github.com/google/uuid"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
 )
 
 const (

@@ -7,9 +7,9 @@ import (
 	"log/slog"
 	"time"
 
-	coresdkconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	coresdkconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
 )
 
 const sdkInvalidationChannel = "switchonyourcode_sdk_invalidate"
