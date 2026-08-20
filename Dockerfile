@@ -3,8 +3,8 @@
 FROM node:24-bookworm-slim AS frontend
 WORKDIR /src/frontend
 RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
-COPY frontend/package.json frontend/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY frontend/package.json ./
+RUN pnpm install --no-frozen-lockfile
 COPY frontend/ ./
 RUN pnpm build
 

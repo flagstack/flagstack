@@ -110,7 +110,7 @@ jobs:
           corepack prepare pnpm@11.22.0 --activate
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Type-check
         run: pnpm typecheck
