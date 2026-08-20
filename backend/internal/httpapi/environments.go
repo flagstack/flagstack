@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	coreenvironment "github.com/flagstack/flagstack/backend/internal/environment"
+	coreenvironment "github.com/switchonyourcode/switchonyourcode/backend/internal/environment"
 )
 
 type environmentHandlers struct {

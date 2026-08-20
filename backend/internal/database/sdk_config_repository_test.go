@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	coresdkconfig "github.com/flagstack/flagstack/backend/internal/sdkconfig"
+	coresdkconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
 )
 
 func TestSDKConfigurationDeliveryIntegration(t *testing.T) {
-	databaseURL := os.Getenv("FLAGSTACK_TEST_DATABASE_URL")
+	databaseURL := os.Getenv("SWITCHONYOURCODE_TEST_DATABASE_URL")
 	if databaseURL == "" {
-		t.Skip("FLAGSTACK_TEST_DATABASE_URL is not set")
+		t.Skip("SWITCHONYOURCODE_TEST_DATABASE_URL is not set")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -162,7 +162,7 @@ func TestSDKConfigurationDeliveryIntegration(t *testing.T) {
 	_, err = pool.Exec(ctx, `
 		INSERT INTO sdk_credentials (
 			organisation_id, project_id, environment_id, name, kind, client_key
-		) VALUES ($1, $2, $3, 'Cross tenant', 'client', 'fs_client_cross_tenant')
+		) VALUES ($1, $2, $3, 'Cross tenant', 'client', 'syoc_client_cross_tenant')
 	`, secondOrganisationID, projectID, environmentID)
 	assertForeignKeyViolation(t, err, "cross-tenant SDK credential")
 }

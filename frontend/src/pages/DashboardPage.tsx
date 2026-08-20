@@ -115,7 +115,7 @@ export function DashboardPage({ organisation }: DashboardPageProps) {
           <CardHeader className="flex items-start justify-between gap-4 border-b border-slate-800">
             <div>
               <CardTitle>Projects</CardTitle>
-              <p className="mt-1 text-xs text-slate-500">Applications and services using FlagStack.</p>
+              <p className="mt-1 text-xs text-slate-500">Applications and services using SwitchOnYourCode.</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="rounded-md border border-slate-800 bg-slate-950/60 px-2 py-1 text-[10px] font-semibold text-slate-500">
@@ -123,7 +123,7 @@ export function DashboardPage({ organisation }: DashboardPageProps) {
               </span>
               {canCreateProject ? (
                 <button
-                  className="rounded-lg bg-flagstack-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-flagstack-500"
+                  className="rounded-lg bg-switchonyourcode-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-switchonyourcode-500"
                   onClick={() => setCreatingProject((value) => !value)}
                   type="button"
                 >
@@ -162,7 +162,7 @@ export function DashboardPage({ organisation }: DashboardPageProps) {
                 </p>
                 {canCreateProject && !creatingProject ? (
                   <button
-                    className="mt-4 rounded-lg bg-flagstack-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-flagstack-500"
+                    className="mt-4 rounded-lg bg-switchonyourcode-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-switchonyourcode-500"
                     onClick={() => setCreatingProject(true)}
                     type="button"
                   >
@@ -178,7 +178,7 @@ export function DashboardPage({ organisation }: DashboardPageProps) {
                     key={project.id}
                     to={`/projects/${project.key}`}
                   >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-flagstack-500/10 text-flagstack-400">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-switchonyourcode-500/10 text-switchonyourcode-400">
                       <Icon name="project" size={17} />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -242,7 +242,7 @@ export function DashboardPage({ organisation }: DashboardPageProps) {
           <CardContent>
             <div className="flex items-center justify-between gap-4 px-5 py-4">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-flagstack-500/10 text-flagstack-400">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-switchonyourcode-500/10 text-switchonyourcode-400">
                   <Icon name="flag" size={16} />
                 </span>
                 <div className="min-w-0">
@@ -296,7 +296,7 @@ export function DashboardPage({ organisation }: DashboardPageProps) {
                   className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold ${
                     complete
                       ? 'border-emerald-800 bg-emerald-950/40 text-emerald-400'
-                      : 'border-violet-900/70 bg-violet-950/30 text-flagstack-400'
+                      : 'border-violet-900/70 bg-violet-950/30 text-switchonyourcode-400'
                   }`}
                 >
                   {complete ? '✓' : index + 1}

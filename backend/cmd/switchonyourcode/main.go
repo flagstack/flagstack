@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/flagstack/flagstack/backend/internal/app"
-	"github.com/flagstack/flagstack/backend/internal/config"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/app"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/config"
 )
 
 func main() {

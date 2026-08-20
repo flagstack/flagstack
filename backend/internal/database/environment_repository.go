@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	flagstackent "github.com/flagstack/flagstack/backend/ent"
-	entenvironment "github.com/flagstack/flagstack/backend/ent/environment"
-	entproject "github.com/flagstack/flagstack/backend/ent/project"
-	coreenvironment "github.com/flagstack/flagstack/backend/internal/environment"
+	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
+	entenvironment "github.com/switchonyourcode/switchonyourcode/backend/ent/environment"
+	entproject "github.com/switchonyourcode/switchonyourcode/backend/ent/project"
+	coreenvironment "github.com/switchonyourcode/switchonyourcode/backend/internal/environment"
 	"github.com/google/uuid"
 )
 
 type EnvironmentRepository struct {
-	client *flagstackent.Client
+	client *switchonyourcodeent.Client
 }
 
-func NewEnvironmentRepository(client *flagstackent.Client) *EnvironmentRepository {
+func NewEnvironmentRepository(client *switchonyourcodeent.Client) *EnvironmentRepository {
 	return &EnvironmentRepository{client: client}
 }
 
@@ -45,8 +45,8 @@ func (r *EnvironmentRepository) List(ctx context.Context, organisationID, projec
 			entenvironment.ProjectID(projectUUID),
 		).
 		Order(
-			flagstackent.Asc(entenvironment.FieldCreatedAt),
-			flagstackent.Asc(entenvironment.FieldID),
+			switchonyourcodeent.Asc(entenvironment.FieldCreatedAt),
+			switchonyourcodeent.Asc(entenvironment.FieldID),
 		).
 		All(ctx)
 	if err != nil {
@@ -96,7 +96,7 @@ func (r *EnvironmentRepository) Create(ctx context.Context, organisationID, proj
 		SetDescription(input.Description).
 		Save(ctx)
 	if err != nil {
-		if flagstackent.IsConstraintError(err) {
+		if switchonyourcodeent.IsConstraintError(err) {
 			return coreenvironment.Environment{}, coreenvironment.ErrKeyConflict
 		}
 		return coreenvironment.Environment{}, fmt.Errorf("create environment: %w", err)

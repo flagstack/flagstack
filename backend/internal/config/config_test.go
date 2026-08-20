@@ -6,11 +6,11 @@ import (
 )
 
 func TestLoadDefaults(t *testing.T) {
-	t.Setenv("FLAGSTACK_HTTP_ADDR", "")
-	t.Setenv("FLAGSTACK_DATABASE_URL", "")
-	t.Setenv("FLAGSTACK_LOG_LEVEL", "")
-	t.Setenv("FLAGSTACK_SESSION_TTL", "")
-	t.Setenv("FLAGSTACK_SESSION_COOKIE_SECURE", "")
+	t.Setenv("SWITCHONYOURCODE_HTTP_ADDR", "")
+	t.Setenv("SWITCHONYOURCODE_DATABASE_URL", "")
+	t.Setenv("SWITCHONYOURCODE_LOG_LEVEL", "")
+	t.Setenv("SWITCHONYOURCODE_SESSION_TTL", "")
+	t.Setenv("SWITCHONYOURCODE_SESSION_COOKIE_SECURE", "")
 
 	cfg, err := Load()
 	if err != nil {
@@ -32,21 +32,21 @@ func TestLoadDefaults(t *testing.T) {
 }
 
 func TestLoadRejectsInvalidLogLevel(t *testing.T) {
-	t.Setenv("FLAGSTACK_LOG_LEVEL", "loud")
+	t.Setenv("SWITCHONYOURCODE_LOG_LEVEL", "loud")
 	if _, err := Load(); err == nil {
 		t.Fatal("Load() error = nil, want error")
 	}
 }
 
 func TestLoadRejectsInvalidSessionTTL(t *testing.T) {
-	t.Setenv("FLAGSTACK_SESSION_TTL", "forever")
+	t.Setenv("SWITCHONYOURCODE_SESSION_TTL", "forever")
 	if _, err := Load(); err == nil {
 		t.Fatal("Load() error = nil, want error")
 	}
 }
 
 func TestLoadRejectsInvalidCookieSecureValue(t *testing.T) {
-	t.Setenv("FLAGSTACK_SESSION_COOKIE_SECURE", "sometimes")
+	t.Setenv("SWITCHONYOURCODE_SESSION_COOKIE_SECURE", "sometimes")
 	if _, err := Load(); err == nil {
 		t.Fatal("Load() error = nil, want error")
 	}

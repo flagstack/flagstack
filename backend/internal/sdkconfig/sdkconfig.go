@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/flagstack/flagstack/backend/internal/evaluation"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
 	"github.com/google/uuid"
 )
 
@@ -21,8 +21,8 @@ const (
 	KindServer    = "server"
 	KindClient    = "client"
 
-	serverKeyPrefix = "fs_server_"
-	clientKeyPrefix = "fs_client_"
+	serverKeyPrefix = "syoc_server_"
+	clientKeyPrefix = "syoc_client_"
 )
 
 var (

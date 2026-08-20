@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
-	coresdkconfig "github.com/flagstack/flagstack/backend/internal/sdkconfig"
+	coresdkconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
 	"github.com/jackc/pgx/v5"
 )
 
 func TestSDKInvalidationTriggersIntegration(t *testing.T) {
-	databaseURL := os.Getenv("FLAGSTACK_TEST_DATABASE_URL")
+	databaseURL := os.Getenv("SWITCHONYOURCODE_TEST_DATABASE_URL")
 	if databaseURL == "" {
-		t.Skip("FLAGSTACK_TEST_DATABASE_URL is not set")
+		t.Skip("SWITCHONYOURCODE_TEST_DATABASE_URL is not set")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -78,7 +78,7 @@ func TestSDKInvalidationTriggersIntegration(t *testing.T) {
 	if err := pool.QueryRow(ctx, `
 		SELECT count(*)
 		FROM pg_trigger
-		WHERE tgname LIKE 'flagstack_sdk_invalidate_%' AND NOT tgisinternal
+		WHERE tgname LIKE 'switchonyourcode_sdk_invalidate_%' AND NOT tgisinternal
 	`).Scan(&triggerCount); err != nil {
 		t.Fatalf("count invalidation triggers: %v", err)
 	}

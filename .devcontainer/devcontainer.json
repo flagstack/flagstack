@@ -1,5 +1,5 @@
 {
-  "name": "FlagStack",
+  "name": "Switch On Your Code",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
@@ -58,11 +58,11 @@
   "forwardPorts": [5173, 8080, 5432],
   "portsAttributes": {
     "5173": {
-      "label": "FlagStack frontend",
+      "label": "SwitchOnYourCode frontend",
       "onAutoForward": "notify"
     },
     "8080": {
-      "label": "FlagStack API",
+      "label": "SwitchOnYourCode API",
       "onAutoForward": "notify"
     },
     "5432": {
@@ -74,10 +74,10 @@
   "postStartCommand": "bash .devcontainer/scripts/link-host-git-config.sh",
   "remoteUser": "root",
   "mounts": [
-    "source=flagstack-bash-history,target=/root/.history,type=volume",
-    "source=flagstack-codex-config,target=/root/.codex,type=volume",
-    "source=flagstack-claude-config,target=/root/.claude,type=volume",
-    "source=flagstack-github-cli-config,target=/root/.config/gh,type=volume",
+    "source=switchonyourcode-bash-history,target=/root/.history,type=volume",
+    "source=switchonyourcode-codex-config,target=/root/.codex,type=volume",
+    "source=switchonyourcode-claude-config,target=/root/.claude,type=volume",
+    "source=switchonyourcode-github-cli-config,target=/root/.config/gh,type=volume",
     "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
     "source=${localEnv:HOME},target=/host-home,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.ssh,target=/root/.ssh,type=bind,consistency=cached,readonly"

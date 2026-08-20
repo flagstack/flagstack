@@ -50,9 +50,9 @@ const operators: Array<{ value: ConditionOperator; label: string }> = [
 ]
 
 const inputClassName =
-  'h-9 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-xs text-slate-200 outline-none transition placeholder:text-slate-700 focus:border-flagstack-500 focus:ring-2 focus:ring-flagstack-500/15'
+  'h-9 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-xs text-slate-200 outline-none transition placeholder:text-slate-700 focus:border-switchonyourcode-500 focus:ring-2 focus:ring-switchonyourcode-500/15'
 const textareaClassName =
-  'min-h-28 w-full resize-y rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs leading-5 text-slate-300 outline-none transition placeholder:text-slate-700 focus:border-flagstack-500 focus:ring-2 focus:ring-flagstack-500/15'
+  'min-h-28 w-full resize-y rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-xs leading-5 text-slate-300 outline-none transition placeholder:text-slate-700 focus:border-switchonyourcode-500 focus:ring-2 focus:ring-switchonyourcode-500/15'
 
 export function FeatureTargetingPanel({
   organisation,
@@ -352,7 +352,7 @@ export function FeatureTargetingPanel({
     <div className="border-t border-slate-800 bg-slate-950/30 px-5 py-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-flagstack-400">Targeting</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-switchonyourcode-400">Targeting</p>
           <h3 className="mt-1 text-sm font-semibold text-slate-200">{featureFlag.name}</h3>
           <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
             Configure variants, ordered rules, deterministic rollouts, reusable segments, previews and scheduled changes before connecting an SDK.
@@ -491,7 +491,7 @@ function Section({ title, description, children }: { title: string; description:
 }
 
 function ActionButton({ disabled, onClick, children }: { disabled?: boolean; onClick: () => void; children: React.ReactNode }) {
-  return <button className="rounded-lg bg-flagstack-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-flagstack-500 disabled:cursor-not-allowed disabled:opacity-50" disabled={disabled} onClick={onClick} type="button">{children}</button>
+  return <button className="rounded-lg bg-switchonyourcode-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-switchonyourcode-500 disabled:cursor-not-allowed disabled:opacity-50" disabled={disabled} onClick={onClick} type="button">{children}</button>
 }
 
 function parseJSON<T>(value: string, message: string): T {

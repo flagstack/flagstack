@@ -9,7 +9,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
-	"github.com/flagstack/flagstack/backend/internal/evaluation"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
 	"github.com/google/uuid"
 )
 

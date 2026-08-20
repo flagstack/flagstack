@@ -2,18 +2,18 @@ services:
   postgres:
     image: postgres:18
     environment:
-      POSTGRES_DB: flagstack
-      POSTGRES_USER: flagstack
-      POSTGRES_PASSWORD: flagstack
+      POSTGRES_DB: switchonyourcode
+      POSTGRES_USER: switchonyourcode
+      POSTGRES_PASSWORD: switchonyourcode
     ports:
       - "5432:5432"
     volumes:
-      - flagstack-postgres:/var/lib/postgresql
+      - switchonyourcode-postgres:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U flagstack -d flagstack"]
+      test: ["CMD-SHELL", "pg_isready -U switchonyourcode -d switchonyourcode"]
       interval: 5s
       timeout: 5s
       retries: 10
 
 volumes:
-  flagstack-postgres:
+  switchonyourcode-postgres:

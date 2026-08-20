@@ -1,14 +1,14 @@
 # Flag evaluation model
 
-FlagStack evaluates flags locally in SDKs from a versioned configuration payload. The control plane stores and validates the same model used by the reference Go evaluator so every SDK can implement identical behaviour.
+Switch On Your Code evaluates flags locally in SDKs from a versioned configuration payload. The control plane stores and validates the same model used by the reference Go evaluator so every SDK can implement identical behaviour.
 
-The design deliberately supports feature delivery and deterministic variant assignment without making FlagStack an experimentation analytics product. Exposure/conversion statistics can be layered on later without changing the evaluation contract.
+The design deliberately supports feature delivery and deterministic variant assignment without making Switch On Your Code an experimentation analytics product. Exposure/conversion statistics can be layered on later without changing the evaluation contract.
 
 Machine-readable schema and compatibility vectors live in [`../spec/`](../spec/). Official SDKs should pin those vectors in their own test suites.
 
 ## Evaluation context
 
-FlagStack follows the OpenFeature evaluation-context shape conceptually:
+Switch On Your Code follows the OpenFeature evaluation-context shape conceptually:
 
 ```json
 {
@@ -27,7 +27,7 @@ FlagStack follows the OpenFeature evaluation-context shape conceptually:
 
 `targetingKey` identifies the subject of an evaluation. It does not have to be a user; it can identify an organisation, device, service, request tenant or any other stable subject.
 
-All other fields are application-owned attributes. FlagStack does not need access to or synchronization with the application's user database. Applications decide which attributes to expose to evaluation.
+All other fields are application-owned attributes. Switch On Your Code does not need access to or synchronization with the application's user database. Applications decide which attributes to expose to evaluation.
 
 Nested attributes are addressed with dot paths such as `custom.beta_program`.
 
@@ -129,9 +129,9 @@ The initial evaluation specification supports:
 
 Missing attributes do not satisfy normal or negative comparisons. Use `not_exists` when absence itself should match.
 
-`contains` supports strings, arrays and object keys, which allows contexts such as `groups: ["staff", "beta-testers"]` without FlagStack needing to manage the application's groups.
+`contains` supports strings, arrays and object keys, which allows contexts such as `groups: ["staff", "beta-testers"]` without Switch On Your Code needing to manage the application's groups.
 
-`matches_regex` uses RE2 semantics and a deliberately portable subset shared by the official SDK runtimes. Look-around, backreferences and other non-RE2 constructs are invalid. FlagStack additionally rejects RE2 POSIX character classes such as `[[:alpha:]]` because they cannot be reproduced safely by the .NET non-backtracking evaluator. Core validation prevents a policy that an official SDK cannot evaluate consistently from being persisted.
+`matches_regex` uses RE2 semantics and a deliberately portable subset shared by the official SDK runtimes. Look-around, backreferences and other non-RE2 constructs are invalid. Switch On Your Code additionally rejects RE2 POSIX character classes such as `[[:alpha:]]` because they cannot be reproduced safely by the .NET non-backtracking evaluator. Core validation prevents a policy that an official SDK cannot evaluate consistently from being persisted.
 
 Semantic-version operators follow the Go `x/mod/semver` interpretation used by the reference evaluator, including shorthand such as `2` and `2.4` (equivalent to `2.0.0` and `2.4.0`).
 
@@ -179,7 +179,7 @@ By default, rollout buckets use `targetingKey`. An alternative scalar context at
 The v1 bucket algorithm is deliberately simple and portable across Python, JavaScript/TypeScript, Go and .NET:
 
 ```text
-input = "flagstack-v1" + NUL + environment_id + NUL + flag_id + NUL + bucket_value
+input = "switchonyourcode-v1" + NUL + environment_id + NUL + flag_id + NUL + bucket_value
 hash = SHA-256(input UTF-8 bytes)
 bucket = big-endian uint32(hash[0:4]) mod 100000
 ```
@@ -190,7 +190,7 @@ Compatibility vector:
 environment_id = env-1
 flag_id        = flag-1
 bucket_value   = user-123
-bucket         = 22683
+bucket         = 3837
 ```
 
 When `bucket_by` names a custom string, boolean or number attribute, `bucket_value` is **not** the runtime's ordinary string conversion. It is the exact Go `encoding/json` representation of that scalar. That fixes otherwise-subtle cross-language differences such as HTML-sensitive string escaping, U+2028/U+2029 escaping, and when floating-point values switch between fixed and exponent notation. The canonical vectors are in [`../spec/evaluation-v1-vectors.json`](../spec/evaluation-v1-vectors.json).
@@ -203,7 +203,7 @@ A percentage outcome without the required bucket attribute fails safely to the f
 
 ## Variant assignment / A-B delivery
 
-FlagStack supports deterministic assignment between multiple variants:
+Switch On Your Code supports deterministic assignment between multiple variants:
 
 ```json
 {
@@ -217,7 +217,7 @@ FlagStack supports deterministic assignment between multiple variants:
 
 This is enough for applications to deliver A/B or multivariate experiences consistently.
 
-FlagStack does **not** initially provide experiment conversion tracking, statistical significance, experiment reports or winner selection. Those analytics capabilities can be added later without changing variant assignment.
+Switch On Your Code does **not** initially provide experiment conversion tracking, statistical significance, experiment reports or winner selection. Those analytics capabilities can be added later without changing variant assignment.
 
 ## Resolution details
 
@@ -268,10 +268,10 @@ next day -> 50% on / 50% off
 final day -> 100% on
 ```
 
-The scheduler must be safe with multiple FlagStack replicas. Due work is claimed atomically from PostgreSQL before applying a configuration revision, so only one replica executes a scheduled change.
+The scheduler must be safe with multiple Switch On Your Code replicas. Due work is claimed atomically from PostgreSQL before applying a configuration revision, so only one replica executes a scheduled change.
 
 ## Privacy
 
-Evaluation context is supplied by the application. FlagStack does not require email addresses, names or other personal data to perform targeting. Applications should prefer opaque stable IDs and the minimum attributes necessary for their targeting rules.
+Evaluation context is supplied by the application. Switch On Your Code does not require email addresses, names or other personal data to perform targeting. Applications should prefer opaque stable IDs and the minimum attributes necessary for their targeting rules.
 
 The configuration delivered to server-side SDKs contains rules and segment definitions but not a synchronized database of application users.

@@ -7,12 +7,12 @@ import (
 	"log/slog"
 	"time"
 
-	coresdkconfig "github.com/flagstack/flagstack/backend/internal/sdkconfig"
+	coresdkconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const sdkInvalidationChannel = "flagstack_sdk_invalidate"
+const sdkInvalidationChannel = "switchonyourcode_sdk_invalidate"
 
 func RunSDKInvalidationListener(ctx context.Context, pool *pgxpool.Pool, hub *coresdkconfig.InvalidationHub, logger *slog.Logger) {
 	if pool == nil || hub == nil {

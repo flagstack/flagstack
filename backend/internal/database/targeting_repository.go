@@ -8,25 +8,25 @@ import (
 	"reflect"
 	"time"
 
-	flagstackent "github.com/flagstack/flagstack/backend/ent"
-	entenvironment "github.com/flagstack/flagstack/backend/ent/environment"
-	entenvironmentflagconfig "github.com/flagstack/flagstack/backend/ent/environmentflagconfig"
-	entfeatureflag "github.com/flagstack/flagstack/backend/ent/featureflag"
-	entproject "github.com/flagstack/flagstack/backend/ent/project"
-	entscheduledflagchange "github.com/flagstack/flagstack/backend/ent/scheduledflagchange"
-	entsegment "github.com/flagstack/flagstack/backend/ent/segment"
-	"github.com/flagstack/flagstack/backend/internal/evaluation"
-	coretargeting "github.com/flagstack/flagstack/backend/internal/targeting"
+	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
+	entenvironment "github.com/switchonyourcode/switchonyourcode/backend/ent/environment"
+	entenvironmentflagconfig "github.com/switchonyourcode/switchonyourcode/backend/ent/environmentflagconfig"
+	entfeatureflag "github.com/switchonyourcode/switchonyourcode/backend/ent/featureflag"
+	entproject "github.com/switchonyourcode/switchonyourcode/backend/ent/project"
+	entscheduledflagchange "github.com/switchonyourcode/switchonyourcode/backend/ent/scheduledflagchange"
+	entsegment "github.com/switchonyourcode/switchonyourcode/backend/ent/segment"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
+	coretargeting "github.com/switchonyourcode/switchonyourcode/backend/internal/targeting"
 	"github.com/google/uuid"
 )
 
 const scheduleClaimLease = 2 * time.Minute
 
 type TargetingRepository struct {
-	client *flagstackent.Client
+	client *switchonyourcodeent.Client
 }
 
-func NewTargetingRepository(client *flagstackent.Client) *TargetingRepository {
+func NewTargetingRepository(client *switchonyourcodeent.Client) *TargetingRepository {
 	return &TargetingRepository{client: client}
 }
 
@@ -46,7 +46,7 @@ func (r *TargetingRepository) GetFlagState(ctx context.Context, organisationID, 
 		entfeatureflag.ProjectID(projectUUID),
 		entfeatureflag.ArchivedAtIsNil(),
 	).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return coretargeting.FlagState{}, coretargeting.ErrFeatureFlagNotFound
 	}
 	if err != nil {
@@ -87,7 +87,7 @@ func (r *TargetingRepository) SetVariants(ctx context.Context, organisationID, p
 		entfeatureflag.ProjectID(projectUUID),
 		entfeatureflag.ArchivedAtIsNil(),
 	).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return coretargeting.FlagState{}, coretargeting.ErrFeatureFlagNotFound
 	}
 	if err != nil {
@@ -117,7 +117,7 @@ func (r *TargetingRepository) SetPolicy(ctx context.Context, organisationID, pro
 		entenvironmentflagconfig.EnvironmentID(environmentUUID),
 		entenvironmentflagconfig.FeatureFlagID(flagUUID),
 	).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		created, createErr := r.client.EnvironmentFlagConfig.Create().
 			SetOrganisationID(organisationUUID).
 			SetProjectID(projectUUID).
@@ -170,7 +170,7 @@ func (r *TargetingRepository) LoadEvaluation(ctx context.Context, organisationID
 	state := coretargeting.EnvironmentState{EnvironmentID: environmentID}
 	if err == nil {
 		state = environmentStateFromEntity(config)
-	} else if !flagstackent.IsNotFound(err) {
+	} else if !switchonyourcodeent.IsNotFound(err) {
 		return evaluation.Flag{}, nil, fmt.Errorf("load evaluation config: %w", err)
 	}
 
@@ -206,7 +206,7 @@ func (r *TargetingRepository) ListSegments(ctx context.Context, organisationID, 
 		entsegment.OrganisationID(organisationUUID),
 		entsegment.ProjectID(projectUUID),
 		entsegment.ArchivedAtIsNil(),
-	).Order(flagstackent.Asc(entsegment.FieldCreatedAt), flagstackent.Asc(entsegment.FieldID)).All(ctx)
+	).Order(switchonyourcodeent.Asc(entsegment.FieldCreatedAt), switchonyourcodeent.Asc(entsegment.FieldID)).All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list targeting segments: %w", err)
 	}
@@ -241,7 +241,7 @@ func (r *TargetingRepository) CreateSegment(ctx context.Context, organisationID,
 		SetConditions(input.Conditions).
 		Save(ctx)
 	if err != nil {
-		if flagstackent.IsConstraintError(err) {
+		if switchonyourcodeent.IsConstraintError(err) {
 			return coretargeting.Segment{}, coretargeting.ErrSegmentKeyConflict
 		}
 		return coretargeting.Segment{}, fmt.Errorf("create targeting segment: %w", err)
@@ -261,7 +261,7 @@ func (r *TargetingRepository) UpdateSegment(ctx context.Context, organisationID,
 	entity, err := r.client.Segment.Query().Where(
 		entsegment.ID(segmentUUID), entsegment.OrganisationID(organisationUUID), entsegment.ProjectID(projectUUID), entsegment.ArchivedAtIsNil(),
 	).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return coretargeting.Segment{}, coretargeting.ErrSegmentNotFound
 	}
 	if err != nil {
@@ -287,7 +287,7 @@ func (r *TargetingRepository) ListScheduledChanges(ctx context.Context, organisa
 	entities, err := r.client.ScheduledFlagChange.Query().Where(
 		entscheduledflagchange.OrganisationID(organisationUUID),
 		entscheduledflagchange.ProjectID(projectUUID),
-	).Order(flagstackent.Asc(entscheduledflagchange.FieldExecuteAt), flagstackent.Asc(entscheduledflagchange.FieldID)).All(ctx)
+	).Order(switchonyourcodeent.Asc(entscheduledflagchange.FieldExecuteAt), switchonyourcodeent.Asc(entscheduledflagchange.FieldID)).All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list scheduled flag changes: %w", err)
 	}
@@ -346,7 +346,7 @@ func (r *TargetingRepository) CancelScheduledChange(ctx context.Context, organis
 		entscheduledflagchange.OrganisationID(organisationUUID),
 		entscheduledflagchange.ProjectID(projectUUID),
 	).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return coretargeting.ScheduledChange{}, coretargeting.ErrScheduleNotFound
 	}
 	if err != nil {
@@ -376,7 +376,7 @@ func (r *TargetingRepository) ClaimDueScheduledChanges(ctx context.Context, now 
 		),
 	)
 	entities, err := r.client.ScheduledFlagChange.Query().Where(eligible).
-		Order(flagstackent.Asc(entscheduledflagchange.FieldExecuteAt), flagstackent.Asc(entscheduledflagchange.FieldID)).
+		Order(switchonyourcodeent.Asc(entscheduledflagchange.FieldExecuteAt), switchonyourcodeent.Asc(entscheduledflagchange.FieldID)).
 		Limit(limit).
 		All(ctx)
 	if err != nil {
@@ -444,7 +444,7 @@ func (r *TargetingRepository) ApplyClaimedScheduledChange(ctx context.Context, c
 		entscheduledflagchange.StatusEQ("running"),
 		entscheduledflagchange.ClaimTokenEQ(claimUUID),
 	).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return coretargeting.ErrScheduleNotPending
 	}
 	if err != nil {
@@ -457,7 +457,7 @@ func (r *TargetingRepository) ApplyClaimedScheduledChange(ctx context.Context, c
 		entenvironmentflagconfig.EnvironmentID(environmentUUID),
 		entenvironmentflagconfig.FeatureFlagID(flagUUID),
 	).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		builder := tx.EnvironmentFlagConfig.Create().
 			SetOrganisationID(organisationUUID).
 			SetProjectID(projectUUID).
@@ -533,7 +533,7 @@ func (r *TargetingRepository) FailClaimedScheduledChange(ctx context.Context, ch
 	return nil
 }
 
-func ensureEvaluationTargets(ctx context.Context, client *flagstackent.Client, organisationID, projectID, environmentID, featureFlagID uuid.UUID) error {
+func ensureEvaluationTargets(ctx context.Context, client *switchonyourcodeent.Client, organisationID, projectID, environmentID, featureFlagID uuid.UUID) error {
 	environmentExists, err := client.Environment.Query().Where(
 		entenvironment.ID(environmentID),
 		entenvironment.OrganisationID(organisationID),
@@ -560,7 +560,7 @@ func ensureEvaluationTargets(ctx context.Context, client *flagstackent.Client, o
 	return nil
 }
 
-func environmentStateFromEntity(entity *flagstackent.EnvironmentFlagConfig) coretargeting.EnvironmentState {
+func environmentStateFromEntity(entity *switchonyourcodeent.EnvironmentFlagConfig) coretargeting.EnvironmentState {
 	return coretargeting.EnvironmentState{
 		EnvironmentID: entity.EnvironmentID.String(),
 		Enabled:       entity.Enabled,
@@ -569,7 +569,7 @@ func environmentStateFromEntity(entity *flagstackent.EnvironmentFlagConfig) core
 	}
 }
 
-func segmentFromEntity(entity *flagstackent.Segment) coretargeting.Segment {
+func segmentFromEntity(entity *switchonyourcodeent.Segment) coretargeting.Segment {
 	return coretargeting.Segment{
 		ID:             entity.ID.String(),
 		OrganisationID: entity.OrganisationID.String(),
@@ -584,7 +584,7 @@ func segmentFromEntity(entity *flagstackent.Segment) coretargeting.Segment {
 	}
 }
 
-func scheduledChangeFromEntity(entity *flagstackent.ScheduledFlagChange) (coretargeting.ScheduledChange, error) {
+func scheduledChangeFromEntity(entity *switchonyourcodeent.ScheduledFlagChange) (coretargeting.ScheduledChange, error) {
 	var patch coretargeting.SchedulePatch
 	if err := decodeJSONStrict(entity.Patch, &patch); err != nil {
 		return coretargeting.ScheduledChange{}, fmt.Errorf("decode scheduled flag patch: %w", err)

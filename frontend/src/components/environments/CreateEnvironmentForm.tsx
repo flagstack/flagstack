@@ -44,7 +44,7 @@ export function CreateEnvironmentForm({ organisation, projectID, onCancel, onCre
   }
 
   const inputClassName =
-    'mt-1.5 h-9 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-700 focus:border-flagstack-500 focus:ring-2 focus:ring-flagstack-500/15'
+    'mt-1.5 h-9 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 text-sm text-slate-200 outline-none transition placeholder:text-slate-700 focus:border-switchonyourcode-500 focus:ring-2 focus:ring-switchonyourcode-500/15'
 
   return (
     <form className="border-b border-slate-800 bg-slate-950/35 px-5 py-4" onSubmit={handleSubmit}>
@@ -84,7 +84,7 @@ export function CreateEnvironmentForm({ organisation, projectID, onCancel, onCre
       <label className="mt-4 block text-xs font-medium text-slate-300">
         Description <span className="font-normal text-slate-600">(optional)</span>
         <textarea
-          className="mt-1.5 min-h-20 w-full resize-y rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm leading-5 text-slate-200 outline-none transition placeholder:text-slate-700 focus:border-flagstack-500 focus:ring-2 focus:ring-flagstack-500/15"
+          className="mt-1.5 min-h-20 w-full resize-y rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm leading-5 text-slate-200 outline-none transition placeholder:text-slate-700 focus:border-switchonyourcode-500 focus:ring-2 focus:ring-switchonyourcode-500/15"
           maxLength={2000}
           onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
           placeholder="Customer-facing production environment."
@@ -108,7 +108,7 @@ export function CreateEnvironmentForm({ organisation, projectID, onCancel, onCre
           Cancel
         </button>
         <button
-          className="rounded-lg bg-flagstack-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-flagstack-500 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-lg bg-switchonyourcode-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-switchonyourcode-500 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={submitting}
           type="submit"
         >

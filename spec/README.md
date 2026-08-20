@@ -1,6 +1,6 @@
-# FlagStack SDK contract
+# Switch On Your Code SDK contract
 
-This directory contains machine-readable artifacts that define the public configuration/evaluation contract shared by the FlagStack control plane and official SDKs.
+This directory contains machine-readable artifacts that define the public configuration/evaluation contract shared by the Switch On Your Code control plane and official SDKs.
 
 ## Files
 

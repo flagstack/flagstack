@@ -1,6 +1,6 @@
 # SDK configuration delivery
 
-FlagStack SDKs evaluate feature flags locally. The control plane supplies an environment-scoped configuration document; SDKs cache that document and apply the evaluation contract in [`evaluation.md`](evaluation.md) without making a network request for each flag evaluation.
+Switch On Your Code SDKs evaluate feature flags locally. The control plane supplies an environment-scoped configuration document; SDKs cache that document and apply the evaluation contract in [`evaluation.md`](evaluation.md) without making a network request for each flag evaluation.
 
 Machine-readable schema and cross-language compatibility vectors live in [`../spec/`](../spec/).
 
@@ -15,10 +15,10 @@ Server credentials are secrets and are intended for trusted backend processes, w
 A server key has the form:
 
 ```text
-fs_server_<credential-id>.<secret>
+syoc_server_<credential-id>.<secret>
 ```
 
-The random secret contains 256 bits of entropy. FlagStack returns the complete key only when the credential is created. The database stores only a SHA-256 digest of the random secret; listing credentials never returns the secret again.
+The random secret contains 256 bits of entropy. Switch On Your Code returns the complete key only when the credential is created. The database stores only a SHA-256 digest of the random secret; listing credentials never returns the secret again.
 
 Because the secret is high-entropy random material, SHA-256 is used as a lookup-verification digest rather than a password hashing function. Verification is constant-time. Revoking the credential immediately prevents further configuration downloads and closes matching realtime invalidation streams.
 
@@ -31,7 +31,7 @@ Client credentials are deliberately **not secrets**. They are intended for brows
 A client key has the form:
 
 ```text
-fs_client_<public-id>
+syoc_client_<public-id>
 ```
 
 Client credentials only receive flags explicitly marked `client_visible`. New flags default to server-only.
@@ -56,7 +56,7 @@ GET /sdk/v1/config
 Authorization: Bearer <sdk-key>
 ```
 
-The endpoint does not use FlagStack browser sessions or cookies. Authentication is entirely through the environment-scoped SDK key.
+The endpoint does not use Switch On Your Code browser sessions or cookies. Authentication is entirely through the environment-scoped SDK key.
 
 Invalid, malformed, or revoked keys return `401 Unauthorized`.
 
@@ -120,7 +120,7 @@ SDKs should retain the most recent successful configuration and send the ETag on
 If-None-Match: "sha256-..."
 ```
 
-If the environment configuration is unchanged, FlagStack responds with `304 Not Modified` and no response body.
+If the environment configuration is unchanged, Switch On Your Code responds with `304 Not Modified` and no response body.
 
 A new ETag is produced whenever the delivered document changes, including changes to flag visibility, enablement, variants, targeting policy, or referenced segments. The per-flag `revision` remains useful for configuration/audit semantics, but SDKs must use the document ETag as the cache validator for the complete payload.
 
@@ -146,7 +146,7 @@ event: ready
 data: {"schema_version":1,"environment_id":"..."}
 ```
 
-When delivered configuration may have changed, FlagStack sends:
+When delivered configuration may have changed, Switch On Your Code sends:
 
 ```text
 event: configuration_changed
@@ -155,13 +155,13 @@ data: {"environment_id":"..."}
 
 The event contains no configuration payload. The SDK performs an ordinary conditional `GET /sdk/v1/config` using its current ETag. This means the config endpoint remains the only source of truth and all existing validation/last-known-good behaviour is reused.
 
-When the connected credential is revoked, FlagStack sends `credential_revoked` and closes the stream. Reconnection or subsequent configuration fetches with that credential return `401 Unauthorized`.
+When the connected credential is revoked, Switch On Your Code sends `credential_revoked` and closes the stream. Reconnection or subsequent configuration fetches with that credential return `401 Unauthorized`.
 
 The server writes comment heartbeats periodically to keep reverse proxies from considering an otherwise-idle stream dead. Proxies must not buffer or cache the event stream.
 
 ### Cross-replica delivery
 
-SDK-visible writes are observed at the PostgreSQL transaction boundary. Database triggers publish scoped notifications through `LISTEN`/`NOTIFY` only after their transaction commits. Every FlagStack API replica maintains a listener and fans those notifications out to its locally connected SDK streams.
+SDK-visible writes are observed at the PostgreSQL transaction boundary. Database triggers publish scoped notifications through `LISTEN`/`NOTIFY` only after their transaction commits. Every Switch On Your Code API replica maintains a listener and fans those notifications out to its locally connected SDK streams.
 
 Invalidations are scoped as narrowly as practical:
 
@@ -171,7 +171,7 @@ Invalidations are scoped as narrowly as practical:
 
 In-memory stream queues deliberately coalesce duplicate pending invalidations. The event means “refresh to current state,” not “replay every intermediate mutation.” This is safe because the ETag-protected configuration document is authoritative.
 
-This design requires no Redis or message broker and remains correct when FlagStack runs multiple replicas against the same PostgreSQL database.
+This design requires no Redis or message broker and remains correct when Switch On Your Code runs multiple replicas against the same PostgreSQL database.
 
 ## Failure behaviour
 

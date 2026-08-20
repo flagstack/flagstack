@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/flagstack/flagstack/backend/internal/evaluation"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
 	"github.com/google/uuid"
 )
 

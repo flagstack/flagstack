@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	coreauth "github.com/flagstack/flagstack/backend/internal/auth"
-	coresdkconfig "github.com/flagstack/flagstack/backend/internal/sdkconfig"
+	coreauth "github.com/switchonyourcode/switchonyourcode/backend/internal/auth"
+	coresdkconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
 )
 
 type fakeSDKConfigRepository struct {
@@ -70,7 +70,7 @@ func TestSDKConfigurationHandlerSupportsETagAndCORS(t *testing.T) {
 	repository := &fakeSDKConfigRepository{
 		credential: coresdkconfig.Credential{
 			ID: "credential-1", OrganisationID: "org-1", ProjectID: "project-1", EnvironmentID: "env-1",
-			Name: "Browser", Kind: coresdkconfig.KindClient, ClientKey: "fs_client_test",
+			Name: "Browser", Kind: coresdkconfig.KindClient, ClientKey: "syoc_client_test",
 		},
 		configuration: coresdkconfig.Configuration{
 			Environment: coresdkconfig.Environment{ID: "env-1", Key: "production"},
@@ -83,7 +83,7 @@ func TestSDKConfigurationHandlerSupportsETagAndCORS(t *testing.T) {
 	handler := newSDKConfigHandlers(service)
 
 	request := httptest.NewRequest(http.MethodGet, "/sdk/v1/config", nil)
-	request.Header.Set("Authorization", "Bearer fs_client_test")
+	request.Header.Set("Authorization", "Bearer syoc_client_test")
 	response := httptest.NewRecorder()
 	handler.configuration(response, request)
 	if response.Code != http.StatusOK {
@@ -98,7 +98,7 @@ func TestSDKConfigurationHandlerSupportsETagAndCORS(t *testing.T) {
 	}
 
 	revalidate := httptest.NewRequest(http.MethodGet, "/sdk/v1/config", nil)
-	revalidate.Header.Set("Authorization", "Bearer fs_client_test")
+	revalidate.Header.Set("Authorization", "Bearer syoc_client_test")
 	revalidate.Header.Set("If-None-Match", etag)
 	revalidationResponse := httptest.NewRecorder()
 	handler.configuration(revalidationResponse, revalidate)
@@ -121,7 +121,7 @@ func TestSDKConfigurationHandlerRejectsInvalidCredential(t *testing.T) {
 	}
 	handler := newSDKConfigHandlers(service)
 	request := httptest.NewRequest(http.MethodGet, "/sdk/v1/config", nil)
-	request.Header.Set("Authorization", "Bearer fs_client_invalid")
+	request.Header.Set("Authorization", "Bearer syoc_client_invalid")
 	response := httptest.NewRecorder()
 	handler.configuration(response, request)
 	if response.Code != http.StatusUnauthorized || response.Header().Get("WWW-Authenticate") == "" {
