@@ -2,7 +2,7 @@ SHELL := /usr/bin/env bash
 
 LOAD_ENV := set -a; if [ -f .env ]; then source .env; fi; set +a;
 
-.PHONY: bootstrap ent-generate dev-backend dev-frontend infra-up infra-down db-up db-migrate fmt test check
+.PHONY: bootstrap ent-generate dev-backend dev-frontend infra-up infra-down selfhost-up selfhost-down image db-up db-migrate fmt test check
 
 bootstrap: ent-generate
 	cd frontend && corepack enable && corepack prepare pnpm@11.22.0 --activate && pnpm install
@@ -21,6 +21,15 @@ infra-up:
 
 infra-down:
 	docker compose down
+
+selfhost-up:
+	docker compose -f compose.selfhost.yml up -d --build
+
+selfhost-down:
+	docker compose -f compose.selfhost.yml down
+
+image:
+	docker build -t flagstack/flagstack:local .
 
 db-up: db-migrate
 

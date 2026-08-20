@@ -22,6 +22,7 @@ type Config struct {
 	LogLevel            slog.Level
 	SessionTTL          time.Duration
 	SessionCookieSecure bool
+	StaticDir           string
 }
 
 func Load() (Config, error) {
@@ -45,6 +46,7 @@ func Load() (Config, error) {
 		LogLevel:            level,
 		SessionTTL:          sessionTTL,
 		SessionCookieSecure: secureCookie,
+		StaticDir:           strings.TrimSpace(os.Getenv("FLAGSTACK_STATIC_DIR")),
 	}, nil
 }
 

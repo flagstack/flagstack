@@ -21,7 +21,8 @@ The repository is organised as a modular monolith:
 - **`backend/`** — Go API, application services, Ent schemas and persistence.
 - **`frontend/`** — React, TypeScript and Tailwind CSS dashboard built with Vite.
 - **`.devcontainer/`** — reproducible development environment.
-- **`compose.yml`** — local infrastructure dependencies.
+- **`compose.yml`** — local development infrastructure.
+- **`compose.selfhost.yml`** — complete self-hosted FlagStack + PostgreSQL stack.
 - **`docs/`** — architecture and development documentation.
 
 See [`docs/architecture.md`](docs/architecture.md) for the initial architecture and package-boundary decisions and [`docs/data-model.md`](docs/data-model.md) for the core tenancy model.
@@ -55,6 +56,24 @@ make check
 ```
 
 `make db-up` and `make db-migrate` both run the explicit Ent migration command. FlagStack does not automatically mutate the database schema when the API starts. Automatic destructive column and index drops are disabled; destructive schema changes must be handled deliberately when they are required.
+
+## Self-hosting
+
+FlagStack now builds as one production application image containing both the Go control plane and compiled React dashboard. PostgreSQL is the only required external service.
+
+For a local self-hosted stack:
+
+```bash
+cp .env.example .env
+# Change FLAGSTACK_POSTGRES_PASSWORD before exposing the deployment externally.
+make selfhost-up
+```
+
+The Compose stack starts PostgreSQL, runs the explicit Ent migrations, and only then starts FlagStack on `http://localhost:8080`. The database port is not exposed by the self-hosted Compose file.
+
+For an internet-facing deployment, terminate TLS in front of FlagStack and set `FLAGSTACK_SESSION_COOKIE_SECURE=true`.
+
+See [`docs/self-hosting.md`](docs/self-hosting.md) for image layout, environment variables, reverse-proxy guidance, health checks, backups and upgrades.
 
 ## SDKs
 

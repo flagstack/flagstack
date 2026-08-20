@@ -66,17 +66,26 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 
 	go runScheduler(ctx, logger, targetingService)
 
+	var handler http.Handler = httpapi.NewRouterWithServices(logger, pool, httpapi.Services{
+		Auth:         authService,
+		Projects:     projectService,
+		Environments: environmentService,
+		FeatureFlags: featureFlagService,
+		FlagConfigs:  flagConfigService,
+		Targeting:    targetingService,
+		SDKConfig:    sdkConfigService,
+	}, httpapi.AuthOptions{SecureCookies: cfg.SessionCookieSecure})
+	if cfg.StaticDir != "" {
+		handler, err = httpapi.NewStaticSPAHandler(cfg.StaticDir, handler)
+		if err != nil {
+			return fmt.Errorf("configure frontend assets: %w", err)
+		}
+		logger.Info("serving frontend assets", "directory", cfg.StaticDir)
+	}
+
 	server := &http.Server{
-		Addr: cfg.HTTPAddr,
-		Handler: httpapi.NewRouterWithServices(logger, pool, httpapi.Services{
-			Auth:         authService,
-			Projects:     projectService,
-			Environments: environmentService,
-			FeatureFlags: featureFlagService,
-			FlagConfigs:  flagConfigService,
-			Targeting:    targetingService,
-			SDKConfig:    sdkConfigService,
-		}, httpapi.AuthOptions{SecureCookies: cfg.SessionCookieSecure}),
+		Addr:              cfg.HTTPAddr,
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
