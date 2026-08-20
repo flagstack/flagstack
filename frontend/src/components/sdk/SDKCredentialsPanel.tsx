@@ -5,6 +5,7 @@ import { APIError, apiRequest } from '../../lib/api'
 import type { CreatedSDKCredential, SDKCredential, SDKCredentialKind } from '../../sdkconfig/types'
 import { Icon } from '../icons'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card'
+import { SDKQuickstart } from './SDKQuickstart'
 
 interface SDKCredentialsPanelProps {
   canManage: boolean
@@ -120,6 +121,7 @@ export function SDKCredentialsPanel({
               Dismiss
             </button>
           </div>
+          <SDKQuickstart kind={revealedKey.kind} sdkKey={revealedKey.key} />
         </div>
       ) : null}
 
