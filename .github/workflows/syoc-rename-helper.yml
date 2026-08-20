@@ -33,6 +33,9 @@ jobs:
           helper = Path('.github/workflows/syoc-rename-helper.yml')
           trigger = Path('.syoc-rename-trigger')
 
+          def is_workflow(path: Path) -> bool:
+              return len(path.parts) >= 3 and path.parts[0] == '.github' and path.parts[1] == 'workflows'
+
           def humanize_markdown(text: str) -> str:
               parts = re.split(r'(```[\s\S]*?```)', text)
               for index in range(0, len(parts), 2):
@@ -52,7 +55,7 @@ jobs:
           bucket_suffixes = {'.go', '.ts', '.tsx', '.js', '.mjs', '.cjs', '.py', '.cs', '.json', '.md'}
 
           for path in list(root.rglob('*')):
-              if not path.is_file() or '.git' in path.parts or path in {helper, trigger}:
+              if not path.is_file() or '.git' in path.parts or path == trigger or is_workflow(path):
                   continue
               try:
                   text = path.read_text(encoding='utf-8')
@@ -83,15 +86,13 @@ jobs:
                   vector['bucket'] = struct.unpack('>I', hashlib.sha256(payload).digest()[:4])[0] % 100000
               vectors.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
-          paths = sorted([p for p in root.rglob('*') if '.git' not in p.parts and p not in {helper, trigger}], key=lambda p: len(p.parts), reverse=True)
+          paths = sorted([p for p in root.rglob('*') if '.git' not in p.parts and p != trigger and not is_workflow(p)], key=lambda p: len(p.parts), reverse=True)
           for path in paths:
               if not path.exists():
                   continue
               new_name = path.name.replace('FLAGSTACK', 'SWITCHONYOURCODE').replace('FlagStack', 'SwitchOnYourCode').replace('flagstack', 'switchonyourcode')
               if new_name != path.name:
                   path.rename(path.with_name(new_name))
-          if helper.exists():
-              helper.unlink()
           if trigger.exists():
               trigger.unlink()
           PY
