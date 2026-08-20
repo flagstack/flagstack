@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "bucket_vectors": [
+    {
+      "name": "reference-targeting-key",
+      "environment_id": "env-1",
+      "flag_id": "flag-1",
+      "bucket_value": "user-123",
+      "bucket": 22683
+    }
+  ],
+  "scalar_bucket_vectors": [
+    {
+      "name": "string",
+      "value": "org-42",
+      "serialized": "\"org-42\"",
+      "bucket": 91560
+    },
+    {
+      "name": "html-and-line-separators",
+      "value": "<>&  ",
+      "serialized": "\"\\u003c\\u003e\\u0026\\u2028\\u2029\"",
+      "bucket": 53181
+    },
+    {
+      "name": "boolean",
+      "value": true,
+      "serialized": "true",
+      "bucket": 17185
+    },
+    {
+      "name": "negative-integer",
+      "value": -42,
+      "serialized": "-42",
+      "bucket": 87178
+    },
+    {
+      "name": "small-exponent",
+      "value": 1e-7,
+      "serialized": "1e-7",
+      "bucket": 35740
+    },
+    {
+      "name": "small-fixed-boundary",
+      "value": 0.000001,
+      "serialized": "0.000001",
+      "bucket": 69539
+    },
+    {
+      "name": "large-fixed-boundary",
+      "value": 100000000000000000000,
+      "serialized": "100000000000000000000",
+      "bucket": 82981
+    },
+    {
+      "name": "large-exponent",
+      "value": 1e21,
+      "serialized": "1e+21",
+      "bucket": 86769
+    }
+  ],
+  "semver_vectors": [
+    { "left": "2.4", "right": "2.4.0", "comparison": 0 },
+    { "left": "v2", "right": "2.0.0", "comparison": 0 },
+    { "left": "2.4.1", "right": "2.4", "comparison": 1 },
+    { "left": "2.4.0-beta.1", "right": "2.4.0", "comparison": -1 }
+  ],
+  "regex_vectors": [
+    { "pattern": "^[^@]+@example\\.com$", "portable": true },
+    { "pattern": "^(?:beta|staff)-[0-9]+$", "portable": true },
+    { "pattern": "[[:alpha:]]+", "portable": false }
+  ]
+}

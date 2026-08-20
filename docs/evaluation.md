@@ -4,6 +4,8 @@ FlagStack evaluates flags locally in SDKs from a versioned configuration payload
 
 The design deliberately supports feature delivery and deterministic variant assignment without making FlagStack an experimentation analytics product. Exposure/conversion statistics can be layered on later without changing the evaluation contract.
 
+Machine-readable schema and compatibility vectors live in [`../spec/`](../spec/). Official SDKs should pin those vectors in their own test suites.
+
 ## Evaluation context
 
 FlagStack follows the OpenFeature evaluation-context shape conceptually:
@@ -129,6 +131,10 @@ Missing attributes do not satisfy normal or negative comparisons. Use `not_exist
 
 `contains` supports strings, arrays and object keys, which allows contexts such as `groups: ["staff", "beta-testers"]` without FlagStack needing to manage the application's groups.
 
+`matches_regex` uses RE2 semantics and a deliberately portable subset shared by the official SDK runtimes. Look-around, backreferences and other non-RE2 constructs are invalid. FlagStack additionally rejects RE2 POSIX character classes such as `[[:alpha:]]` because they cannot be reproduced safely by the .NET non-backtracking evaluator. Core validation prevents a policy that an official SDK cannot evaluate consistently from being persisted.
+
+Semantic-version operators follow the Go `x/mod/semver` interpretation used by the reference evaluator, including shorthand such as `2` and `2.4` (equivalent to `2.0.0` and `2.4.0`).
+
 ## Reusable segments
 
 Segments are project-scoped reusable sets of conditions.
@@ -186,6 +192,10 @@ flag_id        = flag-1
 bucket_value   = user-123
 bucket         = 22683
 ```
+
+When `bucket_by` names a custom string, boolean or number attribute, `bucket_value` is **not** the runtime's ordinary string conversion. It is the exact Go `encoding/json` representation of that scalar. That fixes otherwise-subtle cross-language differences such as HTML-sensitive string escaping, U+2028/U+2029 escaping, and when floating-point values switch between fixed and exponent notation. The canonical vectors are in [`../spec/evaluation-v1-vectors.json`](../spec/evaluation-v1-vectors.json).
+
+`targetingKey` is the exception: it is already a required string identity and is hashed directly, without JSON quotes.
 
 Because the bucket depends on stable flag/environment identity and the subject value, increasing a rollout from 10% to 25% retains the original 10% cohort and adds more subjects instead of reshuffling everybody.
 
