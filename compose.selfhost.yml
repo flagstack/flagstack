@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: flagstack
       POSTGRES_PASSWORD: ${FLAGSTACK_POSTGRES_PASSWORD:-flagstack}
     volumes:
-      - flagstack-selfhost-postgres:/var/lib/postgresql/data
+      - flagstack-selfhost-postgres:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U flagstack -d flagstack"]
       interval: 5s
