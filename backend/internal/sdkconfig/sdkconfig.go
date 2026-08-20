@@ -297,6 +297,7 @@ func referencedSegments(flags []Flag, segments []evaluation.Segment) []evaluatio
 				queue = append(queue, key)
 			}
 		}
+	}
 
 	for _, flag := range flags {
 		for _, rule := range flag.Policy.Rules {
