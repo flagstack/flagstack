@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
 	switchonyourcodemigrate "github.com/switchonyourcode/switchonyourcode/backend/ent/migrate"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func Migrate(ctx context.Context, pool *pgxpool.Pool, client *switchonyourcodeent.Client) error {

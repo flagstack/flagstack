@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
 	entenvironment "github.com/switchonyourcode/switchonyourcode/backend/ent/environment"
 	entenvironmentflagconfig "github.com/switchonyourcode/switchonyourcode/backend/ent/environmentflagconfig"
@@ -14,7 +15,6 @@ import (
 	entsegment "github.com/switchonyourcode/switchonyourcode/backend/ent/segment"
 	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
 	coresdkconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
-	"github.com/google/uuid"
 )
 
 type SDKConfigRepository struct {

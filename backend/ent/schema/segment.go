@@ -7,8 +7,8 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
-	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
 	"github.com/google/uuid"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
 )
 
 type Segment struct{ ent.Schema }
