@@ -42,4 +42,16 @@ A second random CSRF token is issued in a non-HttpOnly cookie. Authenticated mut
 - `GET /api/v1/auth/me` — return the authenticated user and organisation memberships.
 - `POST /api/v1/auth/logout` — revoke the current session; requires CSRF validation.
 
-Project, environment and feature-flag mutation APIs are intentionally not exposed until this authenticated boundary is in place.
+All management APIs for projects, environments, feature flags, targeting, segments, schedules and SDK credentials sit behind the same authenticated session boundary. Read-only requests require a valid organisation membership; state-changing requests also require CSRF validation and the appropriate organisation role.
+
+## Roles and management permissions
+
+The initial organisation roles are `owner`, `admin`, `developer`, and `viewer`.
+
+The current management boundary is intentionally simple:
+
+- `owner` and `admin` can create projects and manage SDK credentials/client visibility;
+- `owner`, `admin`, and `developer` can manage environments, feature flags, variants, targeting policies, segments and schedules;
+- `viewer` can inspect project configuration but cannot mutate it.
+
+SDK configuration delivery does not use browser sessions. `/sdk/v1/config` and `/sdk/v1/events` authenticate independently with environment-scoped server/client SDK bearer credentials as described in [`sdk-delivery.md`](sdk-delivery.md).
