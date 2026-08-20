@@ -26,6 +26,9 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool, client *flagstackent.Clien
 	if err := ensureTenantConstraints(ctx, pool); err != nil {
 		return err
 	}
+	if err := ensureSDKInvalidationTriggers(ctx, pool); err != nil {
+		return err
+	}
 
 	if _, err := pool.Exec(ctx, `DROP TABLE IF EXISTS goose_db_version`); err != nil {
 		return fmt.Errorf("remove legacy Goose migration metadata: %w", err)
@@ -167,6 +170,106 @@ func ensureTenantConstraints(ctx context.Context, pool *pgxpool.Pool) error {
 		if _, err := pool.Exec(ctx, statement.sql); err != nil {
 			return fmt.Errorf("create tenant constraint %s: %w", statement.name, err)
 		}
+	}
+	return nil
+}
+
+func ensureSDKInvalidationTriggers(ctx context.Context, pool *pgxpool.Pool) error {
+	const statement = `
+CREATE OR REPLACE FUNCTION flagstack_notify_sdk_invalidation()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    project_value uuid;
+    environment_value uuid;
+    credential_value uuid;
+    payload jsonb;
+BEGIN
+    IF TG_TABLE_NAME = 'projects' THEN
+        IF TG_OP = 'DELETE' THEN
+            project_value := OLD.id;
+        ELSE
+            project_value := NEW.id;
+        END IF;
+    ELSIF TG_TABLE_NAME = 'environments' THEN
+        IF TG_OP = 'DELETE' THEN
+            project_value := OLD.project_id;
+            environment_value := OLD.id;
+        ELSE
+            project_value := NEW.project_id;
+            environment_value := NEW.id;
+        END IF;
+    ELSIF TG_TABLE_NAME = 'environment_flag_configs' THEN
+        IF TG_OP = 'DELETE' THEN
+            project_value := OLD.project_id;
+            environment_value := OLD.environment_id;
+        ELSE
+            project_value := NEW.project_id;
+            environment_value := NEW.environment_id;
+        END IF;
+    ELSIF TG_TABLE_NAME = 'sdk_credentials' THEN
+        project_value := NEW.project_id;
+        environment_value := NEW.environment_id;
+        credential_value := NEW.id;
+    ELSE
+        IF TG_OP = 'DELETE' THEN
+            project_value := OLD.project_id;
+        ELSE
+            project_value := NEW.project_id;
+        END IF;
+    END IF;
+
+    payload := jsonb_build_object('project_id', project_value::text);
+    IF environment_value IS NOT NULL THEN
+        payload := payload || jsonb_build_object('environment_id', environment_value::text);
+    END IF;
+    IF credential_value IS NOT NULL THEN
+        payload := payload || jsonb_build_object('credential_id', credential_value::text);
+    END IF;
+
+    PERFORM pg_notify('flagstack_sdk_invalidate', payload::text);
+    IF TG_OP = 'DELETE' THEN
+        RETURN OLD;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS flagstack_sdk_invalidate_flag_configs ON environment_flag_configs;
+CREATE TRIGGER flagstack_sdk_invalidate_flag_configs
+AFTER INSERT OR UPDATE OR DELETE ON environment_flag_configs
+FOR EACH ROW EXECUTE FUNCTION flagstack_notify_sdk_invalidation();
+
+DROP TRIGGER IF EXISTS flagstack_sdk_invalidate_feature_flags ON feature_flags;
+CREATE TRIGGER flagstack_sdk_invalidate_feature_flags
+AFTER INSERT OR UPDATE OR DELETE ON feature_flags
+FOR EACH ROW EXECUTE FUNCTION flagstack_notify_sdk_invalidation();
+
+DROP TRIGGER IF EXISTS flagstack_sdk_invalidate_segments ON segments;
+CREATE TRIGGER flagstack_sdk_invalidate_segments
+AFTER INSERT OR UPDATE OR DELETE ON segments
+FOR EACH ROW EXECUTE FUNCTION flagstack_notify_sdk_invalidation();
+
+DROP TRIGGER IF EXISTS flagstack_sdk_invalidate_environments ON environments;
+CREATE TRIGGER flagstack_sdk_invalidate_environments
+AFTER INSERT OR UPDATE OR DELETE ON environments
+FOR EACH ROW EXECUTE FUNCTION flagstack_notify_sdk_invalidation();
+
+DROP TRIGGER IF EXISTS flagstack_sdk_invalidate_projects ON projects;
+CREATE TRIGGER flagstack_sdk_invalidate_projects
+AFTER UPDATE OR DELETE ON projects
+FOR EACH ROW EXECUTE FUNCTION flagstack_notify_sdk_invalidation();
+
+DROP TRIGGER IF EXISTS flagstack_sdk_invalidate_credentials ON sdk_credentials;
+CREATE TRIGGER flagstack_sdk_invalidate_credentials
+AFTER UPDATE OF revoked_at ON sdk_credentials
+FOR EACH ROW
+WHEN (OLD.revoked_at IS DISTINCT FROM NEW.revoked_at)
+EXECUTE FUNCTION flagstack_notify_sdk_invalidation();
+`
+	if _, err := pool.Exec(ctx, statement); err != nil {
+		return fmt.Errorf("install SDK invalidation triggers: %w", err)
 	}
 	return nil
 }

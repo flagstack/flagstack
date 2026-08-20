@@ -7,7 +7,9 @@ FlagStack starts as a modular monolith. That keeps self-hosting straightforward 
 - `backend/` — Go API, application logic, Ent schemas and persistence adapters.
 - `frontend/` — React/TypeScript dashboard built with Vite and Tailwind CSS.
 - `.devcontainer/` — reproducible development environment.
-- `compose.yml` — local infrastructure dependencies.
+- `compose.yml` — local development infrastructure dependencies.
+- `compose.selfhost.yml` — complete self-hosted FlagStack + PostgreSQL deployment.
+- `spec/` — machine-readable SDK wire schema and cross-language evaluation vectors.
 
 ## Backend principles
 
@@ -21,6 +23,8 @@ The dashboard is a client-rendered React application. FlagStack does not current
 
 Tailwind CSS is the frontend styling foundation. React Router provides declarative application routing; additional frontend dependencies are introduced only when a product workflow justifies them.
 
+For production/self-hosted builds the compiled Vite assets are served by the Go application. Development keeps the Vite server separate for fast refresh and proxies management API requests to Go.
+
 ## Persistence
 
 PostgreSQL 18 is the system of record. Ent schemas under `backend/ent/schema` are the source of truth for users, credentials, sessions, organisations, memberships, projects, environments, feature flags, reusable segments, environment-specific flag configuration, scheduled flag changes, and SDK credentials.
@@ -29,7 +33,7 @@ The API keeps pgx for native PostgreSQL connectivity and pooling. Ent is layered
 
 Schema changes are applied by the explicit FlagStack migration command (`make db-up` or `make db-migrate`). The command runs Ent's migration engine with automatic destructive column/index drops disabled. Migrations are not run implicitly when the API starts.
 
-A small PostgreSQL-specific migration reconciler preserves the organisation/project-aware composite foreign keys that enforce tenant boundaries beyond Ent's ordinary single-column relationship foreign keys. The migration command also upgrades databases created by the earlier Goose migrations and removes the old Goose version table after a successful transition.
+A small PostgreSQL-specific migration reconciler preserves the organisation/project-aware composite foreign keys that enforce tenant boundaries beyond Ent's ordinary single-column relationship foreign keys. It also installs SDK invalidation triggers used by the realtime delivery path. The migration command upgrades databases created by the earlier Goose migrations and removes the old Goose version table after a successful transition.
 
 PostgreSQL readiness is exposed separately from process liveness through `/readyz`.
 
@@ -51,6 +55,8 @@ The evaluation model supports:
 
 Percentage assignment is deterministic and keyed by stable flag/environment identity plus the evaluation subject. This keeps cohorts stable across requests and during progressive rollout increases.
 
+The `spec/` directory publishes structural schema and compatibility vectors for the parts of the contract most vulnerable to cross-language drift, including custom bucket serialization, semver shorthand and portable regular expressions.
+
 See [`evaluation.md`](evaluation.md) for the normative evaluation and cross-SDK bucketing specification.
 
 ## SDK configuration delivery
@@ -66,9 +72,13 @@ Client visibility defaults to false and is controlled by organisation owners/adm
 
 SDK configuration is served from `/sdk/v1/config` using bearer authentication. Responses use a content-derived ETag and conditional `If-None-Match` requests so polling can cheaply return `304 Not Modified`. The SDK endpoint has a narrow CORS policy for browser clients; the authenticated dashboard/management API remains same-origin.
 
-Realtime transport is intentionally deferred. A future invalidation channel can tell an SDK to perform the same conditional refresh without changing the configuration or evaluation contracts.
+Realtime freshness uses `/sdk/v1/events`, an authenticated SSE invalidation stream. It never carries a second copy of configuration. An invalidation tells an SDK to perform the same conditional configuration refresh it already knows how to perform.
 
-See [`sdk-delivery.md`](sdk-delivery.md) for the normative credential and wire-format contract.
+Changes are propagated across multiple FlagStack replicas using PostgreSQL `LISTEN`/`NOTIFY`. Database triggers publish only after a transaction commits, each API replica listens on a dedicated PostgreSQL connection, and a small in-memory hub fans scoped invalidations to streams attached to that replica. Duplicate pending invalidations may coalesce because they mean “fetch current state,” not “replay every mutation.” Periodic ETag polling remains the SDK reliability fallback.
+
+This keeps realtime delivery within the existing PostgreSQL dependency rather than introducing Redis or a message broker solely for configuration invalidation.
+
+See [`sdk-delivery.md`](sdk-delivery.md) for the normative credential, wire-format and realtime contract.
 
 ## Scheduling
 
@@ -77,6 +87,18 @@ Scheduled flag changes are a control-plane concern. Each API replica runs a smal
 Claims use a bounded lease. A replica that dies after claiming a change cannot strand it indefinitely: another replica may reclaim the work after the lease expires. Applying a claimed change revalidates the current environment, active flag, variants, segments, and policy before writing a new configuration revision.
 
 Schedules can change enablement or apply a targeting policy. Multiple future policy changes can therefore implement progressive rollout schedules without adding special evaluation semantics.
+
+The same environment-config database update naturally emits the SDK invalidation after the scheduler transaction commits, so scheduled changes and interactive changes share one freshness path.
+
+## Self-hosting boundary
+
+The production image contains the Go control plane, explicit Ent migrator and compiled React dashboard. PostgreSQL is the only required external service for core FlagStack.
+
+The application itself never mutates the schema on API startup. The self-hosted Compose stack models the required deployment sequence explicitly: PostgreSQL readiness -> one-shot migration -> application startup.
+
+TLS termination can live in an ingress or reverse proxy. Core remains a single HTTP application from the operator's point of view.
+
+See [`self-hosting.md`](self-hosting.md) for deployment details.
 
 ## Cloud boundary
 

@@ -19,13 +19,14 @@ type readinessChecker interface {
 }
 
 type Services struct {
-	Auth         *coreauth.Service
-	Projects     *coreproject.Service
-	Environments *coreenvironment.Service
-	FeatureFlags *corefeatureflag.Service
-	FlagConfigs  *coreflagconfig.Service
-	Targeting    *coretargeting.Service
-	SDKConfig    *coresdkconfig.Service
+	Auth             *coreauth.Service
+	Projects         *coreproject.Service
+	Environments     *coreenvironment.Service
+	FeatureFlags     *corefeatureflag.Service
+	FlagConfigs      *coreflagconfig.Service
+	Targeting        *coretargeting.Service
+	SDKConfig        *coresdkconfig.Service
+	SDKInvalidations *coresdkconfig.InvalidationHub
 }
 
 func NewRouter(logger *slog.Logger, readiness readinessChecker, authService *coreauth.Service, authOptions AuthOptions) http.Handler {
@@ -40,8 +41,9 @@ func NewRouterWithServices(logger *slog.Logger, readiness readinessChecker, serv
 
 	var sdkHandlers *sdkConfigHandlers
 	if services.SDKConfig != nil {
-		sdkHandlers = newSDKConfigHandlers(services.SDKConfig)
+		sdkHandlers = newSDKConfigHandlers(services.SDKConfig, services.SDKInvalidations)
 		mux.Handle("/sdk/v1/config", http.HandlerFunc(sdkHandlers.configuration))
+		mux.Handle("/sdk/v1/events", http.HandlerFunc(sdkHandlers.events))
 	}
 
 	if services.Auth != nil {

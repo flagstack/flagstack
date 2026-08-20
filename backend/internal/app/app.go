@@ -63,17 +63,20 @@ func Run(ctx context.Context, cfg config.Config, logger *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("create SDK configuration service: %w", err)
 	}
+	sdkInvalidations := sdkconfig.NewInvalidationHub()
 
 	go runScheduler(ctx, logger, targetingService)
+	go database.RunSDKInvalidationListener(ctx, pool, sdkInvalidations, logger)
 
 	var handler http.Handler = httpapi.NewRouterWithServices(logger, pool, httpapi.Services{
-		Auth:         authService,
-		Projects:     projectService,
-		Environments: environmentService,
-		FeatureFlags: featureFlagService,
-		FlagConfigs:  flagConfigService,
-		Targeting:    targetingService,
-		SDKConfig:    sdkConfigService,
+		Auth:             authService,
+		Projects:         projectService,
+		Environments:     environmentService,
+		FeatureFlags:     featureFlagService,
+		FlagConfigs:      flagConfigService,
+		Targeting:        targetingService,
+		SDKConfig:        sdkConfigService,
+		SDKInvalidations: sdkInvalidations,
 	}, httpapi.AuthOptions{SecureCookies: cfg.SessionCookieSecure})
 	if cfg.StaticDir != "" {
 		handler, err = httpapi.NewStaticSPAHandler(cfg.StaticDir, handler)

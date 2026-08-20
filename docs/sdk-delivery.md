@@ -2,6 +2,8 @@
 
 FlagStack SDKs evaluate feature flags locally. The control plane supplies an environment-scoped configuration document; SDKs cache that document and apply the evaluation contract in [`evaluation.md`](evaluation.md) without making a network request for each flag evaluation.
 
+Machine-readable schema and cross-language compatibility vectors live in [`../spec/`](../spec/).
+
 ## Credential types
 
 SDK credentials always belong to exactly one environment.
@@ -18,7 +20,7 @@ fs_server_<credential-id>.<secret>
 
 The random secret contains 256 bits of entropy. FlagStack returns the complete key only when the credential is created. The database stores only a SHA-256 digest of the random secret; listing credentials never returns the secret again.
 
-Because the secret is high-entropy random material, SHA-256 is used as a lookup-verification digest rather than a password hashing function. Verification is constant-time. Revoking the credential immediately prevents further configuration downloads.
+Because the secret is high-entropy random material, SHA-256 is used as a lookup-verification digest rather than a password hashing function. Verification is constant-time. Revoking the credential immediately prevents further configuration downloads and closes matching realtime invalidation streams.
 
 Server credentials receive every active feature flag in their environment.
 
@@ -95,6 +97,8 @@ The initial wire shape is:
 }
 ```
 
+The structural schema is published as [`../spec/sdk-config-v1.schema.json`](../spec/sdk-config-v1.schema.json). Semantic requirements such as valid variant references, rollout totals and segment cycles are enforced by core before configuration is persisted or delivered.
+
 The environment ID and flag ID are part of the deterministic bucketing input defined in `evaluation.md`; SDK implementations must preserve them exactly.
 
 A missing sparse environment configuration is represented as disabled with revision `0`. Project-level defaults and variants are still included so the SDK can return the correct disabled/default value locally.
@@ -120,6 +124,55 @@ If the environment configuration is unchanged, FlagStack responds with `304 Not 
 
 A new ETag is produced whenever the delivered document changes, including changes to flag visibility, enablement, variants, targeting policy, or referenced segments. The per-flag `revision` remains useful for configuration/audit semantics, but SDKs must use the document ETag as the cache validator for the complete payload.
 
+Polling remains the reliability fallback even when an SDK uses realtime invalidation. An interrupted event stream must never make a long-running SDK permanently stale.
+
+## Realtime invalidation
+
+Realtime delivery is an invalidation channel rather than a second configuration transport. SDKs connect with the same environment-scoped bearer credential:
+
+```http
+GET /sdk/v1/events
+Authorization: Bearer <sdk-key>
+Accept: text/event-stream
+```
+
+The endpoint returns a Server-Sent Events stream. Browser implementations should use streaming `fetch()` rather than the native `EventSource` constructor because the latter cannot attach the required `Authorization` header.
+
+The stream starts with:
+
+```text
+retry: 5000
+event: ready
+data: {"schema_version":1,"environment_id":"..."}
+```
+
+When delivered configuration may have changed, FlagStack sends:
+
+```text
+event: configuration_changed
+data: {"environment_id":"..."}
+```
+
+The event contains no configuration payload. The SDK performs an ordinary conditional `GET /sdk/v1/config` using its current ETag. This means the config endpoint remains the only source of truth and all existing validation/last-known-good behaviour is reused.
+
+When the connected credential is revoked, FlagStack sends `credential_revoked` and closes the stream. Reconnection or subsequent configuration fetches with that credential return `401 Unauthorized`.
+
+The server writes comment heartbeats periodically to keep reverse proxies from considering an otherwise-idle stream dead. Proxies must not buffer or cache the event stream.
+
+### Cross-replica delivery
+
+SDK-visible writes are observed at the PostgreSQL transaction boundary. Database triggers publish scoped notifications through `LISTEN`/`NOTIFY` only after their transaction commits. Every FlagStack API replica maintains a listener and fans those notifications out to its locally connected SDK streams.
+
+Invalidations are scoped as narrowly as practical:
+
+- environment-specific flag configuration and environment changes invalidate that environment;
+- flag definition, variant, client-visibility and segment changes invalidate all environments in the project because they can affect more than one delivered document;
+- credential revocation targets the individual credential stream.
+
+In-memory stream queues deliberately coalesce duplicate pending invalidations. The event means “refresh to current state,” not “replay every intermediate mutation.” This is safe because the ETag-protected configuration document is authoritative.
+
+This design requires no Redis or message broker and remains correct when FlagStack runs multiple replicas against the same PostgreSQL database.
+
 ## Failure behaviour
 
 SDK implementations should keep the most recent valid configuration when a transient refresh fails. A failed refresh must not erase already-loaded configuration.
@@ -128,8 +181,4 @@ The application-provided fallback value remains the final safety boundary when a
 
 SDKs must reject schema versions they do not understand rather than silently interpreting them as an older format.
 
-## Realtime delivery
-
-Realtime invalidation is intentionally not part of schema version 1. Polling with ETag validation establishes the stable authentication and configuration contract first.
-
-A later realtime transport can notify SDKs that their environment changed and trigger an ordinary conditional configuration refresh. The configuration document remains the source of truth, so adding SSE/WebSocket-style invalidation will not require changing evaluation semantics.
+Realtime is an acceleration path, not the only freshness mechanism. SDKs should reconnect the event stream with backoff and retain periodic conditional polling as a fallback.
