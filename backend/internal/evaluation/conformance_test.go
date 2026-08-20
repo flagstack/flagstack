@@ -1,7 +1,6 @@
 package evaluation
 
 import (
-	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -47,11 +46,9 @@ func TestEvaluationV1ConformanceVectors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadFile() error = %v", err)
 	}
-	decoder := json.NewDecoder(bytes.NewReader(payload))
-	decoder.UseNumber()
 	var vectors conformanceVectors
-	if err := decoder.Decode(&vectors); err != nil {
-		t.Fatalf("Decode() error = %v", err)
+	if err := json.Unmarshal(payload, &vectors); err != nil {
+		t.Fatalf("Unmarshal() error = %v", err)
 	}
 	if vectors.SchemaVersion != 1 {
 		t.Fatalf("schema_version = %d, want 1", vectors.SchemaVersion)
