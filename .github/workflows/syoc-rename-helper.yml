@@ -1,7 +1,7 @@
 name: Materialize Switch On Your Code rename
 
 on:
-  push:
+  pull_request:
     branches:
       - agent/syoc-rename-helper
 
@@ -10,12 +10,13 @@ permissions:
 
 jobs:
   rename:
+    if: github.head_ref == 'agent/syoc-rename-work'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout work branch
         uses: actions/checkout@v6
         with:
-          ref: agent/syoc-rename-helper
+          ref: agent/syoc-rename-work
           fetch-depth: 0
 
       - name: Rename product
@@ -41,19 +42,10 @@ jobs:
               return ''.join(parts)
 
           bucket_map = {
-              '22683': '3837',
-              '91560': '35203',
-              '53181': '95458',
-              '17185': '50332',
-              '87178': '66174',
-              '35740': '59926',
-              '69539': '94257',
-              '82981': '14338',
-              '86769': '28947',
-              '91129': '90951',
-              '15580': '99275',
+              '22683': '3837', '91560': '35203', '53181': '95458', '17185': '50332',
+              '87178': '66174', '35740': '59926', '69539': '94257', '82981': '14338',
+              '86769': '28947', '91129': '90951', '15580': '99275',
           }
-
           prose_names = {'LICENSE', 'NOTICE'}
           prose_suffixes = {'.md', '.rst', '.txt'}
           bucket_suffixes = {'.go', '.ts', '.tsx', '.js', '.mjs', '.cjs', '.py', '.cs', '.json', '.md'}
@@ -65,27 +57,17 @@ jobs:
                   text = path.read_text(encoding='utf-8')
               except UnicodeDecodeError:
                   continue
-
               original = text
-              text = text.replace('fs_server_', 'syoc_server_')
-              text = text.replace('fs_client_', 'syoc_client_')
-              text = text.replace('FLAGSTACK', 'SWITCHONYOURCODE')
-              text = text.replace('flagstack', 'switchonyourcode')
-              text = text.replace('FlagStack', 'SwitchOnYourCode')
+              text = text.replace('fs_server_', 'syoc_server_').replace('fs_client_', 'syoc_client_')
+              text = text.replace('FLAGSTACK', 'SWITCHONYOURCODE').replace('flagstack', 'switchonyourcode').replace('FlagStack', 'SwitchOnYourCode')
               text = text.replace('switchonyourcode.io', 'switchonyourcode.com')
-
               if path.suffix.lower() in bucket_suffixes or path.name in prose_names:
                   for old, new in bucket_map.items():
                       text = text.replace(old, new)
-
               if path.suffix.lower() in prose_suffixes or path.name in prose_names:
                   text = humanize_markdown(text)
               else:
-                  text = text.replace('"SwitchOnYourCode"', '"Switch On Your Code"')
-                  text = text.replace("'SwitchOnYourCode'", "'Switch On Your Code'")
-                  text = text.replace('`SwitchOnYourCode`', '`Switch On Your Code`')
-                  text = text.replace('>SwitchOnYourCode<', '>Switch On Your Code<')
-
+                  text = text.replace('"SwitchOnYourCode"', '"Switch On Your Code"').replace("'SwitchOnYourCode'", "'Switch On Your Code'").replace('`SwitchOnYourCode`', '`Switch On Your Code`').replace('>SwitchOnYourCode<', '>Switch On Your Code<')
               if text != original:
                   path.write_text(text, encoding='utf-8')
 
@@ -100,19 +82,13 @@ jobs:
                   vector['bucket'] = struct.unpack('>I', hashlib.sha256(payload).digest()[:4])[0] % 100000
               vectors.write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
-          # Rename brand-bearing files and directories bottom-up.
-          paths = sorted(
-              [p for p in root.rglob('*') if '.git' not in p.parts and p != helper],
-              key=lambda p: len(p.parts),
-              reverse=True,
-          )
+          paths = sorted([p for p in root.rglob('*') if '.git' not in p.parts and p != helper], key=lambda p: len(p.parts), reverse=True)
           for path in paths:
               if not path.exists():
                   continue
               new_name = path.name.replace('FLAGSTACK', 'SWITCHONYOURCODE').replace('FlagStack', 'SwitchOnYourCode').replace('flagstack', 'switchonyourcode')
               if new_name != path.name:
                   path.rename(path.with_name(new_name))
-
           if helper.exists():
               helper.unlink()
           PY
@@ -128,4 +104,4 @@ jobs:
             exit 0
           fi
           git commit -m "chore: Materialize Switch On Your Code rename."
-          git push origin HEAD:agent/syoc-rename-helper
+          git push origin HEAD:agent/syoc-rename-work
