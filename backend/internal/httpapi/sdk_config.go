@@ -5,14 +5,20 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	coresdkconfig "github.com/flagstack/flagstack/backend/internal/sdkconfig"
 )
 
+const sdkEventHeartbeatInterval = 15 * time.Second
+
 type sdkConfigHandlers struct {
-	service *coresdkconfig.Service
+	service       *coresdkconfig.Service
+	invalidations *coresdkconfig.InvalidationHub
 }
 
 type createSDKCredentialRequest struct {
@@ -32,8 +38,20 @@ type sdkCredentialListResponse struct {
 	Credentials []coresdkconfig.Credential `json:"credentials"`
 }
 
-func newSDKConfigHandlers(service *coresdkconfig.Service) *sdkConfigHandlers {
-	return &sdkConfigHandlers{service: service}
+type sdkEventPayload struct {
+	SchemaVersion int    `json:"schema_version,omitempty"`
+	EnvironmentID string `json:"environment_id,omitempty"`
+}
+
+func newSDKConfigHandlers(service *coresdkconfig.Service, hubs ...*coresdkconfig.InvalidationHub) *sdkConfigHandlers {
+	var invalidations *coresdkconfig.InvalidationHub
+	if len(hubs) > 0 {
+		invalidations = hubs[0]
+	}
+	if invalidations == nil {
+		invalidations = coresdkconfig.NewInvalidationHub()
+	}
+	return &sdkConfigHandlers{service: service, invalidations: invalidations}
 }
 
 func (h *sdkConfigHandlers) configuration(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +97,90 @@ func (h *sdkConfigHandlers) configuration(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(body)
+}
+
+func (h *sdkConfigHandlers) events(w http.ResponseWriter, r *http.Request) {
+	setSDKCORSHeaders(w)
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", "GET, OPTIONS")
+		writeAPIError(w, http.StatusMethodNotAllowed, "method_not_allowed", "Only GET and OPTIONS are supported.")
+		return
+	}
+
+	key, ok := bearerToken(r.Header.Get("Authorization"))
+	if !ok {
+		writeSDKUnauthorized(w)
+		return
+	}
+	credential, err := h.service.AuthenticateKey(r.Context(), key)
+	if err != nil {
+		writeSDKUnauthorized(w)
+		return
+	}
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		writeAPIError(w, http.StatusInternalServerError, "streaming_unavailable", "SDK event streaming is unavailable.")
+		return
+	}
+
+	events, unsubscribe := h.invalidations.Subscribe(credential)
+	defer unsubscribe()
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache, no-transform")
+	w.Header().Set("Vary", "Authorization")
+	w.Header().Set("X-Accel-Buffering", "no")
+	w.WriteHeader(http.StatusOK)
+	if _, err := io.WriteString(w, "retry: 5000\n"); err != nil {
+		return
+	}
+	if err := writeSDKEvent(w, "ready", sdkEventPayload{
+		SchemaVersion: coresdkconfig.SchemaVersion,
+		EnvironmentID: credential.EnvironmentID,
+	}); err != nil {
+		return
+	}
+	flusher.Flush()
+
+	heartbeat := time.NewTicker(sdkEventHeartbeatInterval)
+	defer heartbeat.Stop()
+	for {
+		select {
+		case <-r.Context().Done():
+			return
+		case invalidation, open := <-events:
+			if !open {
+				return
+			}
+			if invalidation.CredentialID != "" {
+				_ = writeSDKEvent(w, "credential_revoked", sdkEventPayload{EnvironmentID: credential.EnvironmentID})
+				flusher.Flush()
+				return
+			}
+			if err := writeSDKEvent(w, "configuration_changed", sdkEventPayload{EnvironmentID: credential.EnvironmentID}); err != nil {
+				return
+			}
+			flusher.Flush()
+		case <-heartbeat.C:
+			if _, err := io.WriteString(w, ": keepalive\n\n"); err != nil {
+				return
+			}
+			flusher.Flush()
+		}
+	}
+}
+
+func writeSDKEvent(w io.Writer, event string, payload sdkEventPayload) error {
+	encoded, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, encoded)
+	return err
 }
 
 func (h *sdkConfigHandlers) listCredentials(w http.ResponseWriter, r *http.Request) {

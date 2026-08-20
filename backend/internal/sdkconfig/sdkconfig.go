@@ -187,14 +187,21 @@ func (s *Service) SetClientVisible(ctx context.Context, organisationID, projectI
 	return s.repository.SetClientVisible(ctx, organisationID, projectID, featureFlagID, visible)
 }
 
+func (s *Service) AuthenticateKey(ctx context.Context, rawKey string) (Credential, error) {
+	return s.authenticate(ctx, strings.TrimSpace(rawKey))
+}
+
 func (s *Service) ConfigurationForKey(ctx context.Context, rawKey string) (Configuration, error) {
-	credential, err := s.authenticate(ctx, strings.TrimSpace(rawKey))
+	credential, err := s.AuthenticateKey(ctx, rawKey)
 	if err != nil {
 		return Configuration{}, err
 	}
 	configuration, err := s.repository.LoadConfiguration(ctx, credential)
 	if err != nil {
 		return Configuration{}, err
+	}
+	if err := validateConfiguration(configuration); err != nil {
+		return Configuration{}, fmt.Errorf("validate stored SDK configuration: %w", err)
 	}
 	configuration.SchemaVersion = SchemaVersion
 	configuration.Segments = referencedSegments(configuration.Flags, configuration.Segments)
@@ -249,6 +256,28 @@ func randomToken(size int) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(buffer), nil
 }
 
+func validateConfiguration(configuration Configuration) error {
+	if strings.TrimSpace(configuration.Environment.ID) == "" || strings.TrimSpace(configuration.Environment.Key) == "" {
+		return errors.New("environment identity is required")
+	}
+	if err := evaluation.ValidateSegmentSet(configuration.Segments); err != nil {
+		return fmt.Errorf("segments: %w", err)
+	}
+	segments := append([]evaluation.Segment(nil), configuration.Segments...)
+	for _, flag := range configuration.Flags {
+		if strings.TrimSpace(flag.ID) == "" || strings.TrimSpace(flag.Key) == "" {
+			return errors.New("flag identity is required")
+		}
+		if err := evaluation.ValidateDefinition(flag.Kind, flag.DefaultValue, flag.Variants, flag.Policy); err != nil {
+			return fmt.Errorf("flag %q: %w", flag.Key, err)
+		}
+		if err := evaluation.ValidatePolicySegments(flag.Policy, segments); err != nil {
+			return fmt.Errorf("flag %q: %w", flag.Key, err)
+		}
+	}
+	return nil
+}
+
 func referencedSegments(flags []Flag, segments []evaluation.Segment) []evaluation.Segment {
 	index := make(map[string]evaluation.Segment, len(segments))
 	for _, segment := range segments {
@@ -268,7 +297,6 @@ func referencedSegments(flags []Flag, segments []evaluation.Segment) []evaluatio
 				queue = append(queue, key)
 			}
 		}
-	}
 
 	for _, flag := range flags {
 		for _, rule := range flag.Policy.Rules {
