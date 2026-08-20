@@ -8,16 +8,16 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/flagstack/flagstack/backend/internal/auth"
-	"github.com/flagstack/flagstack/backend/internal/config"
-	"github.com/flagstack/flagstack/backend/internal/database"
-	"github.com/flagstack/flagstack/backend/internal/environment"
-	"github.com/flagstack/flagstack/backend/internal/featureflag"
-	"github.com/flagstack/flagstack/backend/internal/flagconfig"
-	"github.com/flagstack/flagstack/backend/internal/httpapi"
-	"github.com/flagstack/flagstack/backend/internal/project"
-	"github.com/flagstack/flagstack/backend/internal/sdkconfig"
-	"github.com/flagstack/flagstack/backend/internal/targeting"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/auth"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/config"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/database"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/environment"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/featureflag"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/flagconfig"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/httpapi"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/project"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/targeting"
 )
 
 const (

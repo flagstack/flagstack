@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	coreauth "github.com/flagstack/flagstack/backend/internal/auth"
+	coreauth "github.com/switchonyourcode/switchonyourcode/backend/internal/auth"
 )
 
 type fakeAuthRepository struct {

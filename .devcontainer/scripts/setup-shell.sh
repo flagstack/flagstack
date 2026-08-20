@@ -26,8 +26,8 @@ chmod 700 "$HIST_DIR"
 chmod 600 "$HIST_FILE"
 ln -sf "$HIST_FILE" /root/.bash_history
 
-HIST_BEGIN="# >>> flagstack: persistent bash history begin >>>"
-HIST_END="# <<< flagstack: persistent bash history end <<<"
+HIST_BEGIN="# >>> switchonyourcode: persistent bash history begin >>>"
+HIST_END="# <<< switchonyourcode: persistent bash history end <<<"
 replace_block "$HIST_BEGIN" "$HIST_END" "$BASHRC"
 
 cat >>"$BASHRC" <<EOF
@@ -42,12 +42,12 @@ PROMPT_COMMAND="history -a; history -n; \${PROMPT_COMMAND:-}"
 ${HIST_END}
 EOF
 
-COMP_BEGIN="# >>> flagstack: bash completion begin >>>"
-COMP_END="# <<< flagstack: bash completion end <<<"
+COMP_BEGIN="# >>> switchonyourcode: bash completion begin >>>"
+COMP_END="# <<< switchonyourcode: bash completion end <<<"
 replace_block "$COMP_BEGIN" "$COMP_END" "$BASHRC"
 
 cat >>"$BASHRC" <<'EOF'
-# >>> flagstack: bash completion begin >>>
+# >>> switchonyourcode: bash completion begin >>>
 if [ -n "$PS1" ]; then
     if [ -r /etc/profile.d/bash_completion.sh ]; then
         . /etc/profile.d/bash_completion.sh
@@ -58,7 +58,7 @@ fi
 bind "set completion-ignore-case on"
 bind "set show-all-if-ambiguous on"
 bind "set menu-complete-display-prefix on"
-# <<< flagstack: bash completion end <<<
+# <<< switchonyourcode: bash completion end <<<
 EOF
 
 if command -v gh >/dev/null 2>&1; then
@@ -78,16 +78,16 @@ if command -v docker >/dev/null 2>&1; then
     docker completion bash >/etc/bash_completion.d/docker 2>/dev/null || true
 fi
 
-STARSHIP_BEGIN="# >>> flagstack: starship init begin >>>"
-STARSHIP_END="# <<< flagstack: starship init end <<<"
+STARSHIP_BEGIN="# >>> switchonyourcode: starship init begin >>>"
+STARSHIP_END="# <<< switchonyourcode: starship init end <<<"
 replace_block "$STARSHIP_BEGIN" "$STARSHIP_END" "$BASHRC"
 
 cat >>"$BASHRC" <<'EOF'
-# >>> flagstack: starship init begin >>>
+# >>> switchonyourcode: starship init begin >>>
 if command -v starship >/dev/null 2>&1; then
     eval "$(starship init bash)"
 fi
-# <<< flagstack: starship init end <<<
+# <<< switchonyourcode: starship init end <<<
 EOF
 
 cat >/root/.config/starship.toml <<'EOF'

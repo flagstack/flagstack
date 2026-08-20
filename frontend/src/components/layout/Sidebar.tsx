@@ -51,12 +51,12 @@ function SidebarContent({
           onClick={onNavigate}
           to="/"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-flagstack-600 to-indigo-600 text-xs font-black tracking-tight text-white shadow-lg shadow-violet-950/30 ring-1 ring-flagstack-400/20">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-switchonyourcode-600 to-indigo-600 text-xs font-black tracking-tight text-white shadow-lg shadow-violet-950/30 ring-1 ring-switchonyourcode-400/20">
             FS
           </span>
           {!collapsed ? (
             <span className="min-w-0">
-              <strong className="block truncate text-sm font-semibold text-white">FlagStack</strong>
+              <strong className="block truncate text-sm font-semibold text-white">Switch On Your Code</strong>
               <small className="mt-0.5 block truncate text-xs text-slate-500">Feature management</small>
             </span>
           ) : null}
@@ -64,7 +64,7 @@ function SidebarContent({
         {showCloseButton ? (
           <button
             aria-label="Close navigation"
-            className="ml-3 flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-flagstack-400"
+            className="ml-3 flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-switchonyourcode-400"
             onClick={onNavigate}
             type="button"
           >
@@ -103,7 +103,7 @@ function SidebarContent({
                     <>
                       <Icon
                         className={`shrink-0 ${
-                          isActive ? 'text-flagstack-400' : 'text-slate-500 group-hover:text-slate-300'
+                          isActive ? 'text-switchonyourcode-400' : 'text-slate-500 group-hover:text-slate-300'
                         }`}
                         name={item.icon}
                       />

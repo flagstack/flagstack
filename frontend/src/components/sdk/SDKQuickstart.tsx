@@ -52,7 +52,7 @@ export function SDKQuickstart({ kind, sdkKey }: SDKQuickstartProps) {
             <button
               className={`rounded-md border px-2.5 py-1 text-[11px] font-semibold transition ${
                 selected.id === quickstart.id
-                  ? 'border-flagstack-500/60 bg-flagstack-500/10 text-flagstack-300'
+                  ? 'border-switchonyourcode-500/60 bg-switchonyourcode-500/10 text-switchonyourcode-300'
                   : 'border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'
               }`}
               key={quickstart.id}
@@ -69,8 +69,8 @@ export function SDKQuickstart({ kind, sdkKey }: SDKQuickstartProps) {
         <CodeBlock
           action={copied === 'key' ? 'Copied' : 'Copy'}
           label="Environment variable"
-          onCopy={() => void copy(`FLAGSTACK_SDK_KEY=${sdkKey}`, 'key')}
-          value={`FLAGSTACK_SDK_KEY=${sdkKey}`}
+          onCopy={() => void copy(`SWITCHONYOURCODE_SDK_KEY=${sdkKey}`, 'key')}
+          value={`SWITCHONYOURCODE_SDK_KEY=${sdkKey}`}
         />
       ) : null}
       <CodeBlock
@@ -112,26 +112,26 @@ function serverQuickstarts(baseUrl: string): Quickstart[] {
     {
       id: 'python',
       label: 'Python',
-      install: 'pip install flagstack',
-      code: `import os\nfrom flagstack import FlagStackClient\n\nflags = FlagStackClient(\n    base_url=${JSON.stringify(baseUrl)},\n    server_key=os.environ["FLAGSTACK_SDK_KEY"],\n)\nflags.initialize()\n\nenabled = flags.get_boolean_value(\n    "your-flag-key",\n    False,\n    {"targetingKey": "user-123"},\n)`,
+      install: 'pip install switchonyourcode',
+      code: `import os\nfrom switchonyourcode import SwitchOnYourCodeClient\n\nflags = SwitchOnYourCodeClient(\n    base_url=${JSON.stringify(baseUrl)},\n    server_key=os.environ["SWITCHONYOURCODE_SDK_KEY"],\n)\nflags.initialize()\n\nenabled = flags.get_boolean_value(\n    "your-flag-key",\n    False,\n    {"targetingKey": "user-123"},\n)`,
     },
     {
       id: 'node',
       label: 'Node.js',
-      install: 'pnpm add @flagstack/node',
-      code: `import { createNodeClient } from '@flagstack/node'\n\nconst flags = await createNodeClient({\n  baseUrl: ${JSON.stringify(baseUrl)},\n  serverKey: process.env.FLAGSTACK_SDK_KEY!,\n  autoPoll: true,\n})\n\nconst enabled = flags.getBooleanValue('your-flag-key', false, {\n  targetingKey: 'user-123',\n})`,
+      install: 'pnpm add @switchonyourcode/node',
+      code: `import { createNodeClient } from '@switchonyourcode/node'\n\nconst flags = await createNodeClient({\n  baseUrl: ${JSON.stringify(baseUrl)},\n  serverKey: process.env.SWITCHONYOURCODE_SDK_KEY!,\n  autoPoll: true,\n})\n\nconst enabled = flags.getBooleanValue('your-flag-key', false, {\n  targetingKey: 'user-123',\n})`,
     },
     {
       id: 'go',
       label: 'Go',
-      install: 'go get github.com/flagstack/sdk-go',
-      code: `ctx := context.Background()\nflags, err := flagstack.NewClientAndWait(ctx, flagstack.ClientOptions{\n    BaseURL: ${JSON.stringify(baseUrl)},\n    ServerKey: os.Getenv("FLAGSTACK_SDK_KEY"),\n})\nif err != nil {\n    log.Fatal(err)\n}\ndefer flags.Close()\n\nenabled := flags.Boolean("your-flag-key", false, flagstack.EvaluationContext{\n    TargetingKey: "user-123",\n})`,
+      install: 'go get github.com/switchonyourcode/sdk-go',
+      code: `ctx := context.Background()\nflags, err := switchonyourcode.NewClientAndWait(ctx, switchonyourcode.ClientOptions{\n    BaseURL: ${JSON.stringify(baseUrl)},\n    ServerKey: os.Getenv("SWITCHONYOURCODE_SDK_KEY"),\n})\nif err != nil {\n    log.Fatal(err)\n}\ndefer flags.Close()\n\nenabled := flags.Boolean("your-flag-key", false, switchonyourcode.EvaluationContext{\n    TargetingKey: "user-123",\n})`,
     },
     {
       id: 'dotnet',
       label: '.NET',
-      install: 'dotnet add package FlagStack',
-      code: `using FlagStack;\n\nawait using var flags = await FlagStackClient.CreateAndWaitAsync(\n    new FlagStackClientOptions\n    {\n        BaseUrl = ${JSON.stringify(baseUrl)},\n        ServerKey = Environment.GetEnvironmentVariable("FLAGSTACK_SDK_KEY")!,\n    });\n\nvar enabled = flags.GetBooleanValue(\n    "your-flag-key",\n    fallback: false,\n    new EvaluationContext(TargetingKey: "user-123"));`,
+      install: 'dotnet add package SwitchOnYourCode',
+      code: `using SwitchOnYourCode;\n\nawait using var flags = await SwitchOnYourCodeClient.CreateAndWaitAsync(\n    new SwitchOnYourCodeClientOptions\n    {\n        BaseUrl = ${JSON.stringify(baseUrl)},\n        ServerKey = Environment.GetEnvironmentVariable("SWITCHONYOURCODE_SDK_KEY")!,\n    });\n\nvar enabled = flags.GetBooleanValue(\n    "your-flag-key",\n    fallback: false,\n    new EvaluationContext(TargetingKey: "user-123"));`,
     },
   ]
 }
@@ -141,14 +141,14 @@ function clientQuickstarts(baseUrl: string, sdkKey: string): Quickstart[] {
     {
       id: 'browser',
       label: 'Browser',
-      install: 'pnpm add @flagstack/browser',
-      code: `import { createBrowserClient } from '@flagstack/browser'\n\nconst flags = await createBrowserClient({\n  baseUrl: ${JSON.stringify(baseUrl)},\n  clientKey: ${JSON.stringify(sdkKey)},\n})\n\nconst enabled = flags.getBooleanValue('your-flag-key', false, {\n  targetingKey: 'user-123',\n})`,
+      install: 'pnpm add @switchonyourcode/browser',
+      code: `import { createBrowserClient } from '@switchonyourcode/browser'\n\nconst flags = await createBrowserClient({\n  baseUrl: ${JSON.stringify(baseUrl)},\n  clientKey: ${JSON.stringify(sdkKey)},\n})\n\nconst enabled = flags.getBooleanValue('your-flag-key', false, {\n  targetingKey: 'user-123',\n})`,
     },
     {
       id: 'react',
       label: 'React',
-      install: 'pnpm add @flagstack/browser @flagstack/react',
-      code: `import { createBrowserClient } from '@flagstack/browser'\nimport { FlagStackProvider, useBooleanFlag } from '@flagstack/react'\n\nconst flags = await createBrowserClient({\n  baseUrl: ${JSON.stringify(baseUrl)},\n  clientKey: ${JSON.stringify(sdkKey)},\n})\n\nfunction Feature() {\n  const enabled = useBooleanFlag('your-flag-key', false, {\n    targetingKey: 'user-123',\n  })\n  return enabled ? <NewExperience /> : <CurrentExperience />\n}\n\nroot.render(\n  <FlagStackProvider client={flags}>\n    <Feature />\n  </FlagStackProvider>,\n)`,
+      install: 'pnpm add @switchonyourcode/browser @switchonyourcode/react',
+      code: `import { createBrowserClient } from '@switchonyourcode/browser'\nimport { SwitchOnYourCodeProvider, useBooleanFlag } from '@switchonyourcode/react'\n\nconst flags = await createBrowserClient({\n  baseUrl: ${JSON.stringify(baseUrl)},\n  clientKey: ${JSON.stringify(sdkKey)},\n})\n\nfunction Feature() {\n  const enabled = useBooleanFlag('your-flag-key', false, {\n    targetingKey: 'user-123',\n  })\n  return enabled ? <NewExperience /> : <CurrentExperience />\n}\n\nroot.render(\n  <SwitchOnYourCodeProvider client={flags}>\n    <Feature />\n  </SwitchOnYourCodeProvider>,\n)`,
     },
   ]
 }

@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	flagstackent "github.com/flagstack/flagstack/backend/ent"
-	entfeatureflag "github.com/flagstack/flagstack/backend/ent/featureflag"
-	entproject "github.com/flagstack/flagstack/backend/ent/project"
-	corefeatureflag "github.com/flagstack/flagstack/backend/internal/featureflag"
+	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
+	entfeatureflag "github.com/switchonyourcode/switchonyourcode/backend/ent/featureflag"
+	entproject "github.com/switchonyourcode/switchonyourcode/backend/ent/project"
+	corefeatureflag "github.com/switchonyourcode/switchonyourcode/backend/internal/featureflag"
 )
 
 type FeatureFlagRepository struct {
-	client *flagstackent.Client
+	client *switchonyourcodeent.Client
 }
 
-func NewFeatureFlagRepository(client *flagstackent.Client) *FeatureFlagRepository {
+func NewFeatureFlagRepository(client *switchonyourcodeent.Client) *FeatureFlagRepository {
 	return &FeatureFlagRepository{client: client}
 }
 
@@ -45,8 +45,8 @@ func (r *FeatureFlagRepository) List(ctx context.Context, organisationID, projec
 			entfeatureflag.ArchivedAtIsNil(),
 		).
 		Order(
-			flagstackent.Asc(entfeatureflag.FieldCreatedAt),
-			flagstackent.Asc(entfeatureflag.FieldID),
+			switchonyourcodeent.Asc(entfeatureflag.FieldCreatedAt),
+			switchonyourcodeent.Asc(entfeatureflag.FieldID),
 		).
 		All(ctx)
 	if err != nil {
@@ -90,7 +90,7 @@ func (r *FeatureFlagRepository) Create(ctx context.Context, organisationID, proj
 		SetDefaultValue(input.DefaultValue).
 		Save(ctx)
 	if err != nil {
-		if flagstackent.IsConstraintError(err) {
+		if switchonyourcodeent.IsConstraintError(err) {
 			return corefeatureflag.FeatureFlag{}, corefeatureflag.ErrKeyConflict
 		}
 		return corefeatureflag.FeatureFlag{}, fmt.Errorf("create feature flag: %w", err)
@@ -99,7 +99,7 @@ func (r *FeatureFlagRepository) Create(ctx context.Context, organisationID, proj
 	return featureFlagFromEntity(entity), nil
 }
 
-func featureFlagFromEntity(entity *flagstackent.FeatureFlag) corefeatureflag.FeatureFlag {
+func featureFlagFromEntity(entity *switchonyourcodeent.FeatureFlag) corefeatureflag.FeatureFlag {
 	return corefeatureflag.FeatureFlag{
 		ID:             entity.ID.String(),
 		OrganisationID: entity.OrganisationID.String(),

@@ -5,23 +5,23 @@ import (
 	"fmt"
 	"time"
 
-	flagstackent "github.com/flagstack/flagstack/backend/ent"
-	entenvironment "github.com/flagstack/flagstack/backend/ent/environment"
-	entenvironmentflagconfig "github.com/flagstack/flagstack/backend/ent/environmentflagconfig"
-	entfeatureflag "github.com/flagstack/flagstack/backend/ent/featureflag"
-	entproject "github.com/flagstack/flagstack/backend/ent/project"
-	entsdkcredential "github.com/flagstack/flagstack/backend/ent/sdkcredential"
-	entsegment "github.com/flagstack/flagstack/backend/ent/segment"
-	"github.com/flagstack/flagstack/backend/internal/evaluation"
-	coresdkconfig "github.com/flagstack/flagstack/backend/internal/sdkconfig"
+	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
+	entenvironment "github.com/switchonyourcode/switchonyourcode/backend/ent/environment"
+	entenvironmentflagconfig "github.com/switchonyourcode/switchonyourcode/backend/ent/environmentflagconfig"
+	entfeatureflag "github.com/switchonyourcode/switchonyourcode/backend/ent/featureflag"
+	entproject "github.com/switchonyourcode/switchonyourcode/backend/ent/project"
+	entsdkcredential "github.com/switchonyourcode/switchonyourcode/backend/ent/sdkcredential"
+	entsegment "github.com/switchonyourcode/switchonyourcode/backend/ent/segment"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
+	coresdkconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
 	"github.com/google/uuid"
 )
 
 type SDKConfigRepository struct {
-	client *flagstackent.Client
+	client *switchonyourcodeent.Client
 }
 
-func NewSDKConfigRepository(client *flagstackent.Client) *SDKConfigRepository {
+func NewSDKConfigRepository(client *switchonyourcodeent.Client) *SDKConfigRepository {
 	return &SDKConfigRepository{client: client}
 }
 
@@ -33,7 +33,7 @@ func (r *SDKConfigRepository) ListCredentials(ctx context.Context, organisationI
 	entities, err := r.client.SDKCredential.Query().Where(
 		entsdkcredential.OrganisationID(organisationUUID),
 		entsdkcredential.ProjectID(projectUUID),
-	).Order(flagstackent.Asc(entsdkcredential.FieldCreatedAt), flagstackent.Asc(entsdkcredential.FieldID)).All(ctx)
+	).Order(switchonyourcodeent.Asc(entsdkcredential.FieldCreatedAt), switchonyourcodeent.Asc(entsdkcredential.FieldID)).All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list SDK credentials: %w", err)
 	}
@@ -106,7 +106,7 @@ func (r *SDKConfigRepository) RevokeCredential(ctx context.Context, organisation
 		entsdkcredential.OrganisationID(organisationUUID),
 		entsdkcredential.ProjectID(projectUUID),
 	).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return coresdkconfig.Credential{}, coresdkconfig.ErrCredentialNotFound
 	}
 	if err != nil {
@@ -132,7 +132,7 @@ func (r *SDKConfigRepository) FindServerCredential(ctx context.Context, credenti
 		entsdkcredential.KindEQ(coresdkconfig.KindServer),
 		entsdkcredential.RevokedAtIsNil(),
 	).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return coresdkconfig.StoredServerCredential{}, coresdkconfig.ErrCredentialNotFound
 	}
 	if err != nil {
@@ -150,7 +150,7 @@ func (r *SDKConfigRepository) FindClientCredential(ctx context.Context, clientKe
 		entsdkcredential.KindEQ(coresdkconfig.KindClient),
 		entsdkcredential.RevokedAtIsNil(),
 	).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return coresdkconfig.Credential{}, coresdkconfig.ErrCredentialNotFound
 	}
 	if err != nil {
@@ -174,7 +174,7 @@ func (r *SDKConfigRepository) SetClientVisible(ctx context.Context, organisation
 		entfeatureflag.ProjectID(projectUUID),
 		entfeatureflag.ArchivedAtIsNil(),
 	).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return false, coresdkconfig.ErrFeatureFlagNotFound
 	}
 	if err != nil {
@@ -212,7 +212,7 @@ func (r *SDKConfigRepository) LoadConfiguration(ctx context.Context, credential 
 		entenvironment.OrganisationID(organisationUUID),
 		entenvironment.ProjectID(projectUUID),
 	).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return coresdkconfig.Configuration{}, coresdkconfig.ErrInvalidCredential
 	}
 	if err != nil {
@@ -227,7 +227,7 @@ func (r *SDKConfigRepository) LoadConfiguration(ctx context.Context, credential 
 	if credential.Kind == coresdkconfig.KindClient {
 		flagQuery = flagQuery.Where(entfeatureflag.ClientVisibleEQ(true))
 	}
-	flagEntities, err := flagQuery.Order(flagstackent.Asc(entfeatureflag.FieldKey), flagstackent.Asc(entfeatureflag.FieldID)).All(ctx)
+	flagEntities, err := flagQuery.Order(switchonyourcodeent.Asc(entfeatureflag.FieldKey), switchonyourcodeent.Asc(entfeatureflag.FieldID)).All(ctx)
 	if err != nil {
 		return coresdkconfig.Configuration{}, fmt.Errorf("load SDK configuration flags: %w", err)
 	}
@@ -239,7 +239,7 @@ func (r *SDKConfigRepository) LoadConfiguration(ctx context.Context, credential 
 	if err != nil {
 		return coresdkconfig.Configuration{}, fmt.Errorf("load SDK environment flag configuration: %w", err)
 	}
-	configByFlag := make(map[uuid.UUID]*flagstackent.EnvironmentFlagConfig, len(configEntities))
+	configByFlag := make(map[uuid.UUID]*switchonyourcodeent.EnvironmentFlagConfig, len(configEntities))
 	for _, config := range configEntities {
 		configByFlag[config.FeatureFlagID] = config
 	}
@@ -265,7 +265,7 @@ func (r *SDKConfigRepository) LoadConfiguration(ctx context.Context, credential 
 		entsegment.OrganisationID(organisationUUID),
 		entsegment.ProjectID(projectUUID),
 		entsegment.ArchivedAtIsNil(),
-	).Order(flagstackent.Asc(entsegment.FieldKey), flagstackent.Asc(entsegment.FieldID)).All(ctx)
+	).Order(switchonyourcodeent.Asc(entsegment.FieldKey), switchonyourcodeent.Asc(entsegment.FieldID)).All(ctx)
 	if err != nil {
 		return coresdkconfig.Configuration{}, fmt.Errorf("load SDK configuration segments: %w", err)
 	}
@@ -286,7 +286,7 @@ func (r *SDKConfigRepository) LoadConfiguration(ctx context.Context, credential 
 	}, nil
 }
 
-func sdkCredentialFromEntity(entity *flagstackent.SDKCredential) coresdkconfig.Credential {
+func sdkCredentialFromEntity(entity *switchonyourcodeent.SDKCredential) coresdkconfig.Credential {
 	return coresdkconfig.Credential{
 		ID:             entity.ID.String(),
 		OrganisationID: entity.OrganisationID.String(),

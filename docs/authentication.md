@@ -1,6 +1,6 @@
 # Authentication
 
-FlagStack core provides self-host-friendly local authentication as the baseline identity path. Hosted or enterprise identity providers can be added later without making the core product depend on FlagStack Cloud.
+Switch On Your Code core provides self-host-friendly local authentication as the baseline identity path. Hosted or enterprise identity providers can be added later without making the core product depend on Switch On Your Code Cloud.
 
 ## First-run bootstrap
 
@@ -30,7 +30,7 @@ Login responses do not distinguish an unknown email address from an incorrect pa
 
 Authenticated browser sessions use opaque 32-byte random tokens. The raw session token is sent only to the browser in an HttpOnly cookie; PostgreSQL stores only its SHA-256 digest. Database disclosure therefore does not directly reveal reusable session tokens.
 
-Sessions expire after `FLAGSTACK_SESSION_TTL`, which defaults to seven days. Production deployments should leave `FLAGSTACK_SESSION_COOKIE_SECURE=true`; the repository `.env.example` disables it only for local HTTP development.
+Sessions expire after `SWITCHONYOURCODE_SESSION_TTL`, which defaults to seven days. Production deployments should leave `SWITCHONYOURCODE_SESSION_COOKIE_SECURE=true`; the repository `.env.example` disables it only for local HTTP development.
 
 A second random CSRF token is issued in a non-HttpOnly cookie. Authenticated mutation requests must send the same token in the `X-CSRF-Token` header, and the API validates it against the server-side digest stored with the session.
 

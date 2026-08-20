@@ -28,4 +28,4 @@ git config --global --add safe.directory /workspace
 bash .devcontainer/scripts/setup-shell.sh
 bash .devcontainer/scripts/link-host-git-config.sh
 
-echo "FlagStack development environment is ready."
+echo "SwitchOnYourCode development environment is ready."

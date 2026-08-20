@@ -14,10 +14,10 @@ func TestStaticSPAHandlerServesAssetsRoutesAndLeavesControlPlaneAlone(t *testing
 	if err := os.MkdirAll(filepath.Join(root, "assets"), 0o755); err != nil {
 		t.Fatalf("MkdirAll() error = %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "index.html"), []byte("<html>FlagStack</html>"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "index.html"), []byte("<html>Switch On Your Code</html>"), 0o644); err != nil {
 		t.Fatalf("WriteFile(index) error = %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(root, "assets", "app.js"), []byte("console.log('flagstack')"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(root, "assets", "app.js"), []byte("console.log('switchonyourcode')"), 0o644); err != nil {
 		t.Fatalf("WriteFile(asset) error = %v", err)
 	}
 
@@ -33,7 +33,7 @@ func TestStaticSPAHandlerServesAssetsRoutesAndLeavesControlPlaneAlone(t *testing
 		request := httptest.NewRequest(http.MethodGet, "/projects/example", nil)
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, request)
-		if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "FlagStack") {
+		if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "Switch On Your Code") {
 			t.Fatalf("response = %d %q", response.Code, response.Body.String())
 		}
 		if cache := response.Header().Get("Cache-Control"); cache != "no-cache" {
@@ -45,7 +45,7 @@ func TestStaticSPAHandlerServesAssetsRoutesAndLeavesControlPlaneAlone(t *testing
 		request := httptest.NewRequest(http.MethodGet, "/assets/app.js", nil)
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, request)
-		if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "flagstack") {
+		if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "switchonyourcode") {
 			t.Fatalf("response = %d %q", response.Code, response.Body.String())
 		}
 		if cache := response.Header().Get("Cache-Control"); cache != "public, max-age=31536000, immutable" {

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	coreflagconfig "github.com/flagstack/flagstack/backend/internal/flagconfig"
+	coreflagconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/flagconfig"
 )
 
 type flagConfigHandlers struct {

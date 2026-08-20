@@ -43,7 +43,7 @@ export function TopBar({
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-4 border-b border-slate-800 bg-slate-900/95 px-4 backdrop-blur lg:px-6">
       <button
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        className="hidden h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-flagstack-400 lg:flex"
+        className="hidden h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-switchonyourcode-400 lg:flex"
         onClick={onToggleSidebar}
         type="button"
       >
@@ -52,7 +52,7 @@ export function TopBar({
 
       <button
         aria-label="Open navigation"
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-flagstack-400 lg:hidden"
+        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-switchonyourcode-400 lg:hidden"
         onClick={onOpenMobileNavigation}
         type="button"
       >
@@ -66,7 +66,7 @@ export function TopBar({
         type="button"
       >
         <Icon name="search" size={17} />
-        <span className="truncate">Search FlagStack...</span>
+        <span className="truncate">Search SwitchOnYourCode...</span>
         <kbd className="ml-auto hidden rounded border border-slate-700 bg-slate-900 px-1.5 py-0.5 text-[10px] text-slate-600 sm:block">
           ⌘K
         </kbd>
@@ -84,7 +84,7 @@ export function TopBar({
 
         <details className="group relative">
           <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg p-1.5 transition hover:bg-slate-800 [&::-webkit-details-marker]:hidden">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-flagstack-600 to-indigo-600 text-xs font-black text-white ring-1 ring-flagstack-400/20">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-switchonyourcode-600 to-indigo-600 text-xs font-black text-white ring-1 ring-switchonyourcode-400/20">
               {initials(user.display_name, user.email)}
             </span>
             <span className="hidden min-w-0 text-left xl:block">

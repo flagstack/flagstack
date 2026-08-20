@@ -48,10 +48,10 @@ export function BootstrapPage({ onAuthenticated }: BootstrapPageProps) {
 
   return (
     <AuthFrame
-      description="Create the first owner account and organisation for this FlagStack installation. This setup route closes permanently after the first account is created."
+      description="Create the first owner account and organisation for this SwitchOnYourCode installation. This setup route closes permanently after the first account is created."
       eyebrow="First run"
       footer="Local authentication is the self-hosted baseline. Additional identity providers can be added later."
-      title="Set up FlagStack"
+      title="Set up SwitchOnYourCode"
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -134,11 +134,11 @@ export function BootstrapPage({ onAuthenticated }: BootstrapPageProps) {
         ) : null}
 
         <button
-          className="flex h-10 w-full items-center justify-center rounded-lg bg-flagstack-600 px-4 text-sm font-semibold text-white transition hover:bg-flagstack-500 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-10 w-full items-center justify-center rounded-lg bg-switchonyourcode-600 px-4 text-sm font-semibold text-white transition hover:bg-switchonyourcode-500 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={submitting}
           type="submit"
         >
-          {submitting ? 'Creating workspace…' : 'Create FlagStack workspace'}
+          {submitting ? 'Creating workspace…' : 'Create SwitchOnYourCode workspace'}
         </button>
       </form>
     </AuthFrame>

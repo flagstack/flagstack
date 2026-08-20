@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/flagstack/flagstack/backend/internal/config"
-	"github.com/flagstack/flagstack/backend/internal/database"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/config"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/database"
 )
 
 func main() {
@@ -28,7 +28,7 @@ func main() {
 	if err := database.Migrate(ctx, pool, client); err != nil {
 		fail(err)
 	}
-	fmt.Println("FlagStack database schema is up to date.")
+	fmt.Println("SwitchOnYourCode database schema is up to date.")
 }
 
 func fail(err error) {

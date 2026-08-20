@@ -4,19 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	flagstackent "github.com/flagstack/flagstack/backend/ent"
-	entenvironment "github.com/flagstack/flagstack/backend/ent/environment"
-	entfeatureflag "github.com/flagstack/flagstack/backend/ent/featureflag"
-	entproject "github.com/flagstack/flagstack/backend/ent/project"
-	coreproject "github.com/flagstack/flagstack/backend/internal/project"
+	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
+	entenvironment "github.com/switchonyourcode/switchonyourcode/backend/ent/environment"
+	entfeatureflag "github.com/switchonyourcode/switchonyourcode/backend/ent/featureflag"
+	entproject "github.com/switchonyourcode/switchonyourcode/backend/ent/project"
+	coreproject "github.com/switchonyourcode/switchonyourcode/backend/internal/project"
 	"github.com/google/uuid"
 )
 
 type ProjectRepository struct {
-	client *flagstackent.Client
+	client *switchonyourcodeent.Client
 }
 
-func NewProjectRepository(client *flagstackent.Client) *ProjectRepository {
+func NewProjectRepository(client *switchonyourcodeent.Client) *ProjectRepository {
 	return &ProjectRepository{client: client}
 }
 
@@ -32,8 +32,8 @@ func (r *ProjectRepository) List(ctx context.Context, organisationID string) ([]
 			entproject.ArchivedAtIsNil(),
 		).
 		Order(
-			flagstackent.Desc(entproject.FieldCreatedAt),
-			flagstackent.Desc(entproject.FieldID),
+			switchonyourcodeent.Desc(entproject.FieldCreatedAt),
+			switchonyourcodeent.Desc(entproject.FieldID),
 		).
 		All(ctx)
 	if err != nil {
@@ -91,7 +91,7 @@ func (r *ProjectRepository) Create(ctx context.Context, organisationID string, i
 		SetDescription(input.Description).
 		Save(ctx)
 	if err != nil {
-		if flagstackent.IsConstraintError(err) {
+		if switchonyourcodeent.IsConstraintError(err) {
 			return coreproject.Project{}, coreproject.ErrKeyConflict
 		}
 		return coreproject.Project{}, fmt.Errorf("create project: %w", err)

@@ -26,27 +26,27 @@ type Config struct {
 }
 
 func Load() (Config, error) {
-	level, err := parseLogLevel(getenv("FLAGSTACK_LOG_LEVEL", defaultLogLevel))
+	level, err := parseLogLevel(getenv("SWITCHONYOURCODE_LOG_LEVEL", defaultLogLevel))
 	if err != nil {
 		return Config{}, err
 	}
 
-	sessionTTL, err := parseDuration("FLAGSTACK_SESSION_TTL", getenv("FLAGSTACK_SESSION_TTL", defaultSessionTTL.String()))
+	sessionTTL, err := parseDuration("SWITCHONYOURCODE_SESSION_TTL", getenv("SWITCHONYOURCODE_SESSION_TTL", defaultSessionTTL.String()))
 	if err != nil {
 		return Config{}, err
 	}
-	secureCookie, err := parseBool("FLAGSTACK_SESSION_COOKIE_SECURE", getenv("FLAGSTACK_SESSION_COOKIE_SECURE", strconv.FormatBool(defaultSessionCookieSecure)))
+	secureCookie, err := parseBool("SWITCHONYOURCODE_SESSION_COOKIE_SECURE", getenv("SWITCHONYOURCODE_SESSION_COOKIE_SECURE", strconv.FormatBool(defaultSessionCookieSecure)))
 	if err != nil {
 		return Config{}, err
 	}
 
 	return Config{
-		HTTPAddr:            getenv("FLAGSTACK_HTTP_ADDR", defaultHTTPAddr),
-		DatabaseURL:         os.Getenv("FLAGSTACK_DATABASE_URL"),
+		HTTPAddr:            getenv("SWITCHONYOURCODE_HTTP_ADDR", defaultHTTPAddr),
+		DatabaseURL:         os.Getenv("SWITCHONYOURCODE_DATABASE_URL"),
 		LogLevel:            level,
 		SessionTTL:          sessionTTL,
 		SessionCookieSecure: secureCookie,
-		StaticDir:           strings.TrimSpace(os.Getenv("FLAGSTACK_STATIC_DIR")),
+		StaticDir:           strings.TrimSpace(os.Getenv("SWITCHONYOURCODE_STATIC_DIR")),
 	}, nil
 }
 
@@ -60,7 +60,7 @@ func getenv(key, fallback string) string {
 func parseLogLevel(value string) (slog.Level, error) {
 	var level slog.Level
 	if err := level.UnmarshalText([]byte(strings.ToLower(strings.TrimSpace(value)))); err != nil {
-		return 0, fmt.Errorf("invalid FLAGSTACK_LOG_LEVEL %q: %w", value, err)
+		return 0, fmt.Errorf("invalid SWITCHONYOURCODE_LOG_LEVEL %q: %w", value, err)
 	}
 	return level, nil
 }

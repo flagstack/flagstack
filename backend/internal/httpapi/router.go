@@ -5,13 +5,13 @@ import (
 	"log/slog"
 	"net/http"
 
-	coreauth "github.com/flagstack/flagstack/backend/internal/auth"
-	coreenvironment "github.com/flagstack/flagstack/backend/internal/environment"
-	corefeatureflag "github.com/flagstack/flagstack/backend/internal/featureflag"
-	coreflagconfig "github.com/flagstack/flagstack/backend/internal/flagconfig"
-	coreproject "github.com/flagstack/flagstack/backend/internal/project"
-	coresdkconfig "github.com/flagstack/flagstack/backend/internal/sdkconfig"
-	coretargeting "github.com/flagstack/flagstack/backend/internal/targeting"
+	coreauth "github.com/switchonyourcode/switchonyourcode/backend/internal/auth"
+	coreenvironment "github.com/switchonyourcode/switchonyourcode/backend/internal/environment"
+	corefeatureflag "github.com/switchonyourcode/switchonyourcode/backend/internal/featureflag"
+	coreflagconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/flagconfig"
+	coreproject "github.com/switchonyourcode/switchonyourcode/backend/internal/project"
+	coresdkconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
+	coretargeting "github.com/switchonyourcode/switchonyourcode/backend/internal/targeting"
 )
 
 type readinessChecker interface {

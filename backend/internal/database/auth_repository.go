@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	flagstackent "github.com/flagstack/flagstack/backend/ent"
-	"github.com/flagstack/flagstack/backend/ent/localcredential"
-	"github.com/flagstack/flagstack/backend/ent/organisationmembership"
-	"github.com/flagstack/flagstack/backend/ent/user"
-	"github.com/flagstack/flagstack/backend/ent/usersession"
-	"github.com/flagstack/flagstack/backend/internal/auth"
+	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
+	"github.com/switchonyourcode/switchonyourcode/backend/ent/localcredential"
+	"github.com/switchonyourcode/switchonyourcode/backend/ent/organisationmembership"
+	"github.com/switchonyourcode/switchonyourcode/backend/ent/user"
+	"github.com/switchonyourcode/switchonyourcode/backend/ent/usersession"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/auth"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -22,10 +22,10 @@ const bootstrapAdvisoryLock int64 = 0x466c616753746163
 
 type AuthRepository struct {
 	pool   *pgxpool.Pool
-	client *flagstackent.Client
+	client *switchonyourcodeent.Client
 }
 
-func NewAuthRepository(pool *pgxpool.Pool, client *flagstackent.Client) *AuthRepository {
+func NewAuthRepository(pool *pgxpool.Pool, client *switchonyourcodeent.Client) *AuthRepository {
 	return &AuthRepository{pool: pool, client: client}
 }
 
@@ -125,7 +125,7 @@ func (r *AuthRepository) Bootstrap(ctx context.Context, record auth.BootstrapRec
 func (r *AuthRepository) CredentialByEmail(ctx context.Context, email string) (auth.Credential, error) {
 	normalized := strings.ToLower(strings.TrimSpace(email))
 	userEntity, err := r.client.User.Query().Where(user.Email(normalized)).Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return auth.Credential{}, auth.ErrCredentialNotFound
 	}
 	if err != nil {
@@ -135,7 +135,7 @@ func (r *AuthRepository) CredentialByEmail(ctx context.Context, email string) (a
 	credentialEntity, err := r.client.LocalCredential.Query().
 		Where(localcredential.UserID(userEntity.ID)).
 		Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return auth.Credential{}, auth.ErrCredentialNotFound
 	}
 	if err != nil {
@@ -172,7 +172,7 @@ func (r *AuthRepository) SessionByTokenHash(ctx context.Context, tokenHash [32]b
 			usersession.ExpiresAtGT(time.Now()),
 		).
 		Only(ctx)
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		return auth.Session{}, auth.ErrSessionNotFound
 	}
 	if err != nil {

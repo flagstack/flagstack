@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	corefeatureflag "github.com/flagstack/flagstack/backend/internal/featureflag"
+	corefeatureflag "github.com/switchonyourcode/switchonyourcode/backend/internal/featureflag"
 )
 
 type featureFlagHandlers struct {

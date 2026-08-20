@@ -26,7 +26,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   }
 
   if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-    const csrfToken = getCookie('flagstack_csrf')
+    const csrfToken = getCookie('switchonyourcode_csrf')
     if (csrfToken) {
       headers.set('X-CSRF-Token', csrfToken)
     }

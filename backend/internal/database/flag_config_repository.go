@@ -4,19 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	flagstackent "github.com/flagstack/flagstack/backend/ent"
-	entenvironment "github.com/flagstack/flagstack/backend/ent/environment"
-	entenvironmentflagconfig "github.com/flagstack/flagstack/backend/ent/environmentflagconfig"
-	entfeatureflag "github.com/flagstack/flagstack/backend/ent/featureflag"
-	coreflagconfig "github.com/flagstack/flagstack/backend/internal/flagconfig"
+	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
+	entenvironment "github.com/switchonyourcode/switchonyourcode/backend/ent/environment"
+	entenvironmentflagconfig "github.com/switchonyourcode/switchonyourcode/backend/ent/environmentflagconfig"
+	entfeatureflag "github.com/switchonyourcode/switchonyourcode/backend/ent/featureflag"
+	coreflagconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/flagconfig"
 	"github.com/google/uuid"
 )
 
 type FlagConfigRepository struct {
-	client *flagstackent.Client
+	client *switchonyourcodeent.Client
 }
 
-func NewFlagConfigRepository(client *flagstackent.Client) *FlagConfigRepository {
+func NewFlagConfigRepository(client *switchonyourcodeent.Client) *FlagConfigRepository {
 	return &FlagConfigRepository{client: client}
 }
 
@@ -32,8 +32,8 @@ func (r *FlagConfigRepository) List(ctx context.Context, organisationID, project
 			entenvironmentflagconfig.ProjectID(projectUUID),
 		).
 		Order(
-			flagstackent.Asc(entenvironmentflagconfig.FieldEnvironmentID),
-			flagstackent.Asc(entenvironmentflagconfig.FieldFeatureFlagID),
+			switchonyourcodeent.Asc(entenvironmentflagconfig.FieldEnvironmentID),
+			switchonyourcodeent.Asc(entenvironmentflagconfig.FieldFeatureFlagID),
 		).
 		All(ctx)
 	if err != nil {
@@ -66,10 +66,10 @@ func (r *FlagConfigRepository) SetEnabled(ctx context.Context, organisationID, p
 	}
 
 	entity, err := r.find(ctx, organisationUUID, projectUUID, environmentUUID, featureFlagUUID)
-	if err != nil && !flagstackent.IsNotFound(err) {
+	if err != nil && !switchonyourcodeent.IsNotFound(err) {
 		return coreflagconfig.Config{}, fmt.Errorf("find environment flag config: %w", err)
 	}
-	if flagstackent.IsNotFound(err) {
+	if switchonyourcodeent.IsNotFound(err) {
 		if !enabled {
 			return coreflagconfig.Config{
 				EnvironmentID: environmentID,
@@ -89,7 +89,7 @@ func (r *FlagConfigRepository) SetEnabled(ctx context.Context, organisationID, p
 		if createErr == nil {
 			return flagConfigFromEntity(created), nil
 		}
-		if !flagstackent.IsConstraintError(createErr) {
+		if !switchonyourcodeent.IsConstraintError(createErr) {
 			return coreflagconfig.Config{}, fmt.Errorf("create environment flag config: %w", createErr)
 		}
 
@@ -145,7 +145,7 @@ func (r *FlagConfigRepository) validateTargets(ctx context.Context, organisation
 	return nil
 }
 
-func (r *FlagConfigRepository) find(ctx context.Context, organisationID, projectID, environmentID, featureFlagID uuid.UUID) (*flagstackent.EnvironmentFlagConfig, error) {
+func (r *FlagConfigRepository) find(ctx context.Context, organisationID, projectID, environmentID, featureFlagID uuid.UUID) (*switchonyourcodeent.EnvironmentFlagConfig, error) {
 	return r.client.EnvironmentFlagConfig.Query().
 		Where(
 			entenvironmentflagconfig.OrganisationID(organisationID),
@@ -156,7 +156,7 @@ func (r *FlagConfigRepository) find(ctx context.Context, organisationID, project
 		Only(ctx)
 }
 
-func flagConfigFromEntity(entity *flagstackent.EnvironmentFlagConfig) coreflagconfig.Config {
+func flagConfigFromEntity(entity *switchonyourcodeent.EnvironmentFlagConfig) coreflagconfig.Config {
 	return coreflagconfig.Config{
 		EnvironmentID: entity.EnvironmentID.String(),
 		FeatureFlagID: entity.FeatureFlagID.String(),

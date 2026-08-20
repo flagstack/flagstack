@@ -40,7 +40,7 @@ export function App() {
     } catch (error) {
       setState({
         status: 'error',
-        message: error instanceof Error ? error.message : 'FlagStack could not initialise.',
+        message: error instanceof Error ? error.message : 'SwitchOnYourCode could not initialise.',
       })
     }
   }, [])
@@ -50,7 +50,7 @@ export function App() {
   }, [initialise])
 
   if (state.status === 'loading') {
-    return <StartupScreen message="Loading FlagStack…" />
+    return <StartupScreen message="Loading SwitchOnYourCode…" />
   }
 
   if (state.status === 'error') {
@@ -58,7 +58,7 @@ export function App() {
       <StartupScreen
         action={
           <button
-            className="mt-4 rounded-lg bg-flagstack-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-flagstack-500"
+            className="mt-4 rounded-lg bg-switchonyourcode-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-switchonyourcode-500"
             onClick={() => void initialise()}
             type="button"
           >
@@ -104,7 +104,7 @@ function StartupScreen({ message, action }: { message: string; action?: ReactNod
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-center text-slate-200">
       <div>
-        <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-flagstack-600 to-indigo-600 text-sm font-black text-white ring-1 ring-flagstack-400/20">
+        <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-switchonyourcode-600 to-indigo-600 text-sm font-black text-white ring-1 ring-switchonyourcode-400/20">
           FS
         </span>
         <p className="mt-4 text-sm text-slate-500">{message}</p>

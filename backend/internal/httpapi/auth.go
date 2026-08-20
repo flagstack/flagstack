@@ -10,12 +10,12 @@ import (
 	"net/http"
 	"time"
 
-	coreauth "github.com/flagstack/flagstack/backend/internal/auth"
+	coreauth "github.com/switchonyourcode/switchonyourcode/backend/internal/auth"
 )
 
 const (
-	sessionCookieName = "flagstack_session"
-	csrfCookieName    = "flagstack_csrf"
+	sessionCookieName = "switchonyourcode_session"
+	csrfCookieName    = "switchonyourcode_csrf"
 	maxAuthBodyBytes  = 32 << 10
 )
 
