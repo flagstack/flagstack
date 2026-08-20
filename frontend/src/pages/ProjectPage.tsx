@@ -178,7 +178,7 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
             </div>
             {canManage ? (
               <button
-                className="rounded-lg bg-flagstack-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-flagstack-500"
+                className="rounded-lg bg-switchonyourcode-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-switchonyourcode-500"
                 onClick={() => setCreatingEnvironment((value) => !value)}
                 type="button"
               >
@@ -267,7 +267,7 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
           </div>
           {canManage ? (
             <button
-              className="rounded-lg bg-flagstack-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-flagstack-500"
+              className="rounded-lg bg-switchonyourcode-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-switchonyourcode-500"
               onClick={() => setCreatingFeatureFlag((value) => !value)}
               type="button"
             >
@@ -298,7 +298,7 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
 
           {featureFlags.length === 0 ? (
             <div className="flex min-h-52 flex-col items-center justify-center px-5 py-8 text-center">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-flagstack-500/10 text-flagstack-400">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-switchonyourcode-500/10 text-switchonyourcode-400">
                 <Icon name="flag" size={20} />
               </span>
               <strong className="mt-3 text-sm font-medium text-slate-300">No feature flags yet</strong>
@@ -313,7 +313,7 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
                   <div className="px-5 py-4">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div className="flex min-w-0 gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-flagstack-500/10 text-flagstack-400">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-switchonyourcode-500/10 text-switchonyourcode-400">
                           <Icon name="flag" size={17} />
                         </span>
                         <div className="min-w-0">
@@ -381,7 +381,7 @@ export function ProjectPage({ organisation }: ProjectPageProps) {
                           <button
                             className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
                               targetingFlagID === featureFlag.id
-                                ? 'border-flagstack-500/60 bg-flagstack-500/10 text-flagstack-300'
+                                ? 'border-switchonyourcode-500/60 bg-switchonyourcode-500/10 text-switchonyourcode-300'
                                 : 'border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-600 hover:text-slate-200'
                             }`}
                             onClick={() => setTargetingFlagID((current) => current === featureFlag.id ? undefined : featureFlag.id)}
@@ -438,7 +438,7 @@ function ProjectState({ message }: { message: string }) {
       <div>
         <Icon className="mx-auto text-slate-700" name="project" size={28} />
         <p className="mt-3 text-sm text-slate-500">{message}</p>
-        <Link className="mt-4 inline-block text-xs font-semibold text-flagstack-400 hover:text-flagstack-300" to="/">
+        <Link className="mt-4 inline-block text-xs font-semibold text-switchonyourcode-400 hover:text-switchonyourcode-300" to="/">
           Return to dashboard
         </Link>
       </div>

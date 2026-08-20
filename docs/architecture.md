@@ -1,6 +1,6 @@
 # Initial architecture
 
-FlagStack starts as a modular monolith. That keeps self-hosting straightforward and keeps product boundaries explicit without paying the operational cost of distributed services before they are needed.
+Switch On Your Code starts as a modular monolith. That keeps self-hosting straightforward and keeps product boundaries explicit without paying the operational cost of distributed services before they are needed.
 
 ## Repository layout
 
@@ -8,18 +8,18 @@ FlagStack starts as a modular monolith. That keeps self-hosting straightforward 
 - `frontend/` — React/TypeScript dashboard built with Vite and Tailwind CSS.
 - `.devcontainer/` — reproducible development environment.
 - `compose.yml` — local development infrastructure dependencies.
-- `compose.selfhost.yml` — complete self-hosted FlagStack + PostgreSQL deployment.
+- `compose.selfhost.yml` — complete self-hosted Switch On Your Code + PostgreSQL deployment.
 - `spec/` — machine-readable SDK wire schema and cross-language evaluation vectors.
 
 ## Backend principles
 
 The backend is standard-library-first. Go's `net/http` and `log/slog` are sufficient for the initial transport and logging layers, so the scaffold does not add a framework solely for structure.
 
-As domain work lands, dependencies should point inward: transport and persistence code may depend on application/domain contracts, while the domain must not depend on HTTP, PostgreSQL, or hosted FlagStack Cloud concerns.
+As domain work lands, dependencies should point inward: transport and persistence code may depend on application/domain contracts, while the domain must not depend on HTTP, PostgreSQL, or hosted Switch On Your Code Cloud concerns.
 
 ## Frontend principles
 
-The dashboard is a client-rendered React application. FlagStack does not currently need server-side rendering, so Vite keeps the frontend build and self-hosted deployment model smaller than a full-stack JavaScript framework.
+The dashboard is a client-rendered React application. Switch On Your Code does not currently need server-side rendering, so Vite keeps the frontend build and self-hosted deployment model smaller than a full-stack JavaScript framework.
 
 Tailwind CSS is the frontend styling foundation. React Router provides declarative application routing; additional frontend dependencies are introduced only when a product workflow justifies them.
 
@@ -31,7 +31,7 @@ PostgreSQL 18 is the system of record. Ent schemas under `backend/ent/schema` ar
 
 The API keeps pgx for native PostgreSQL connectivity and pooling. Ent is layered over that same pgx pool, so the application does not maintain a second database connection pool.
 
-Schema changes are applied by the explicit FlagStack migration command (`make db-up` or `make db-migrate`). The command runs Ent's migration engine with automatic destructive column/index drops disabled. Migrations are not run implicitly when the API starts.
+Schema changes are applied by the explicit Switch On Your Code migration command (`make db-up` or `make db-migrate`). The command runs Ent's migration engine with automatic destructive column/index drops disabled. Migrations are not run implicitly when the API starts.
 
 A small PostgreSQL-specific migration reconciler preserves the organisation/project-aware composite foreign keys that enforce tenant boundaries beyond Ent's ordinary single-column relationship foreign keys. It also installs SDK invalidation triggers used by the realtime delivery path. The migration command upgrades databases created by the earlier Goose migrations and removes the old Goose version table after a successful transition.
 
@@ -61,11 +61,11 @@ See [`evaluation.md`](evaluation.md) for the normative evaluation and cross-SDK 
 
 ## SDK configuration delivery
 
-SDKs do not call FlagStack for every flag evaluation. They download an environment-scoped schema-v1 configuration document and evaluate locally using the same contract as the reference Go evaluator.
+SDKs do not call Switch On Your Code for every flag evaluation. They download an environment-scoped schema-v1 configuration document and evaluate locally using the same contract as the reference Go evaluator.
 
 Two credential types keep trusted-server and public-client use cases separate:
 
-- `server` credentials contain a high-entropy secret. FlagStack returns the full value once and stores only its digest. Server credentials receive all active flags in their environment.
+- `server` credentials contain a high-entropy secret. Switch On Your Code returns the full value once and stores only its digest. Server credentials receive all active flags in their environment.
 - `client` credentials are public identifiers suitable for browser/mobile applications. They receive only flags explicitly marked client-visible.
 
 Client visibility defaults to false and is controlled by organisation owners/admins. This is a security boundary: a client-visible flag's values, variants, targeting rules, rollout configuration and referenced segment definitions must be assumed public.
@@ -74,7 +74,7 @@ SDK configuration is served from `/sdk/v1/config` using bearer authentication. R
 
 Realtime freshness uses `/sdk/v1/events`, an authenticated SSE invalidation stream. It never carries a second copy of configuration. An invalidation tells an SDK to perform the same conditional configuration refresh it already knows how to perform.
 
-Changes are propagated across multiple FlagStack replicas using PostgreSQL `LISTEN`/`NOTIFY`. Database triggers publish only after a transaction commits, each API replica listens on a dedicated PostgreSQL connection, and a small in-memory hub fans scoped invalidations to streams attached to that replica. Duplicate pending invalidations may coalesce because they mean “fetch current state,” not “replay every mutation.” Periodic ETag polling remains the SDK reliability fallback.
+Changes are propagated across multiple Switch On Your Code replicas using PostgreSQL `LISTEN`/`NOTIFY`. Database triggers publish only after a transaction commits, each API replica listens on a dedicated PostgreSQL connection, and a small in-memory hub fans scoped invalidations to streams attached to that replica. Duplicate pending invalidations may coalesce because they mean “fetch current state,” not “replay every mutation.” Periodic ETag polling remains the SDK reliability fallback.
 
 This keeps realtime delivery within the existing PostgreSQL dependency rather than introducing Redis or a message broker solely for configuration invalidation.
 
@@ -92,7 +92,7 @@ The same environment-config database update naturally emits the SDK invalidation
 
 ## Self-hosting boundary
 
-The production image contains the Go control plane, explicit Ent migrator and compiled React dashboard. PostgreSQL is the only required external service for core FlagStack.
+The production image contains the Go control plane, explicit Ent migrator and compiled React dashboard. PostgreSQL is the only required external service for core Switch On Your Code.
 
 The application itself never mutates the schema on API startup. The self-hosted Compose stack models the required deployment sequence explicitly: PostgreSQL readiness -> one-shot migration -> application startup.
 
@@ -102,4 +102,4 @@ See [`self-hosting.md`](self-hosting.md) for deployment details.
 
 ## Cloud boundary
 
-Core feature-management behaviour belongs in this repository. Billing, managed provisioning, usage metering, and other hosted-service-only concerns belong in the private `flagstack-cloud` repository.
+Core feature-management behaviour belongs in this repository. Billing, managed provisioning, usage metering, and other hosted-service-only concerns belong in the private `switchonyourcode-cloud` repository.

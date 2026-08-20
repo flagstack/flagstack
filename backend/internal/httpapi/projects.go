@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	coreauth "github.com/flagstack/flagstack/backend/internal/auth"
-	coreproject "github.com/flagstack/flagstack/backend/internal/project"
+	coreauth "github.com/switchonyourcode/switchonyourcode/backend/internal/auth"
+	coreproject "github.com/switchonyourcode/switchonyourcode/backend/internal/project"
 )
 
 type projectHandlers struct {

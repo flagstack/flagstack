@@ -2,13 +2,13 @@ services:
   postgres:
     image: postgres:18
     environment:
-      POSTGRES_DB: flagstack
-      POSTGRES_USER: flagstack
-      POSTGRES_PASSWORD: ${FLAGSTACK_POSTGRES_PASSWORD:-flagstack}
+      POSTGRES_DB: switchonyourcode
+      POSTGRES_USER: switchonyourcode
+      POSTGRES_PASSWORD: ${SWITCHONYOURCODE_POSTGRES_PASSWORD:-switchonyourcode}
     volumes:
-      - flagstack-selfhost-postgres:/var/lib/postgresql
+      - switchonyourcode-selfhost-postgres:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U flagstack -d flagstack"]
+      test: ["CMD-SHELL", "pg_isready -U switchonyourcode -d switchonyourcode"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -17,33 +17,33 @@ services:
   migrate:
     build:
       context: .
-    image: flagstack/flagstack:local
-    command: ["/app/flagstack-migrate"]
+    image: switchonyourcode/switchonyourcode:local
+    command: ["/app/switchonyourcode-migrate"]
     environment:
-      FLAGSTACK_DATABASE_URL: postgres://flagstack:${FLAGSTACK_POSTGRES_PASSWORD:-flagstack}@postgres:5432/flagstack?sslmode=disable
-      FLAGSTACK_LOG_LEVEL: ${FLAGSTACK_LOG_LEVEL:-info}
+      SWITCHONYOURCODE_DATABASE_URL: postgres://switchonyourcode:${SWITCHONYOURCODE_POSTGRES_PASSWORD:-switchonyourcode}@postgres:5432/switchonyourcode?sslmode=disable
+      SWITCHONYOURCODE_LOG_LEVEL: ${SWITCHONYOURCODE_LOG_LEVEL:-info}
     depends_on:
       postgres:
         condition: service_healthy
     restart: "no"
 
-  flagstack:
+  switchonyourcode:
     build:
       context: .
-    image: flagstack/flagstack:local
+    image: switchonyourcode/switchonyourcode:local
     environment:
-      FLAGSTACK_DATABASE_URL: postgres://flagstack:${FLAGSTACK_POSTGRES_PASSWORD:-flagstack}@postgres:5432/flagstack?sslmode=disable
-      FLAGSTACK_HTTP_ADDR: :8080
-      FLAGSTACK_LOG_LEVEL: ${FLAGSTACK_LOG_LEVEL:-info}
-      FLAGSTACK_SESSION_TTL: ${FLAGSTACK_SESSION_TTL:-168h}
-      FLAGSTACK_SESSION_COOKIE_SECURE: ${FLAGSTACK_SESSION_COOKIE_SECURE:-false}
-      FLAGSTACK_STATIC_DIR: /app/frontend
+      SWITCHONYOURCODE_DATABASE_URL: postgres://switchonyourcode:${SWITCHONYOURCODE_POSTGRES_PASSWORD:-switchonyourcode}@postgres:5432/switchonyourcode?sslmode=disable
+      SWITCHONYOURCODE_HTTP_ADDR: :8080
+      SWITCHONYOURCODE_LOG_LEVEL: ${SWITCHONYOURCODE_LOG_LEVEL:-info}
+      SWITCHONYOURCODE_SESSION_TTL: ${SWITCHONYOURCODE_SESSION_TTL:-168h}
+      SWITCHONYOURCODE_SESSION_COOKIE_SECURE: ${SWITCHONYOURCODE_SESSION_COOKIE_SECURE:-false}
+      SWITCHONYOURCODE_STATIC_DIR: /app/frontend
     ports:
-      - "${FLAGSTACK_PORT:-8080}:8080"
+      - "${SWITCHONYOURCODE_PORT:-8080}:8080"
     depends_on:
       migrate:
         condition: service_completed_successfully
     restart: unless-stopped
 
 volumes:
-  flagstack-selfhost-postgres:
+  switchonyourcode-selfhost-postgres:

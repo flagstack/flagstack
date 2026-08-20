@@ -35,7 +35,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
       description="Sign in to manage projects, environments and feature flags for your organisations."
       eyebrow="Authentication"
       footer="Session tokens are stored in an HttpOnly cookie and can be revoked by signing out."
-      title="Sign in to FlagStack"
+      title="Sign in to SwitchOnYourCode"
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <label className={authLabelClassName}>
@@ -68,7 +68,7 @@ export function LoginPage({ onAuthenticated }: LoginPageProps) {
         ) : null}
 
         <button
-          className="flex h-10 w-full items-center justify-center rounded-lg bg-flagstack-600 px-4 text-sm font-semibold text-white transition hover:bg-flagstack-500 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-10 w-full items-center justify-center rounded-lg bg-switchonyourcode-600 px-4 text-sm font-semibold text-white transition hover:bg-switchonyourcode-500 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={submitting}
           type="submit"
         >

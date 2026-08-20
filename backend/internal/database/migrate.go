@@ -4,21 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	flagstackent "github.com/flagstack/flagstack/backend/ent"
-	flagstackmigrate "github.com/flagstack/flagstack/backend/ent/migrate"
+	switchonyourcodeent "github.com/switchonyourcode/switchonyourcode/backend/ent"
+	switchonyourcodemigrate "github.com/switchonyourcode/switchonyourcode/backend/ent/migrate"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Migrate(ctx context.Context, pool *pgxpool.Pool, client *flagstackent.Client) error {
+func Migrate(ctx context.Context, pool *pgxpool.Pool, client *switchonyourcodeent.Client) error {
 	if err := prepareLegacyGooseSchema(ctx, pool); err != nil {
 		return err
 	}
 
 	if err := client.Schema.Create(
 		ctx,
-		flagstackmigrate.WithDropColumn(false),
-		flagstackmigrate.WithDropIndex(false),
-		flagstackmigrate.WithForeignKeys(true),
+		switchonyourcodemigrate.WithDropColumn(false),
+		switchonyourcodemigrate.WithDropIndex(false),
+		switchonyourcodemigrate.WithForeignKeys(true),
 	); err != nil {
 		return fmt.Errorf("apply Ent schema migration: %w", err)
 	}
@@ -176,7 +176,7 @@ func ensureTenantConstraints(ctx context.Context, pool *pgxpool.Pool) error {
 
 func ensureSDKInvalidationTriggers(ctx context.Context, pool *pgxpool.Pool) error {
 	const statement = `
-CREATE OR REPLACE FUNCTION flagstack_notify_sdk_invalidation()
+CREATE OR REPLACE FUNCTION switchonyourcode_notify_sdk_invalidation()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
@@ -228,7 +228,7 @@ BEGIN
         payload := payload || jsonb_build_object('credential_id', credential_value::text);
     END IF;
 
-    PERFORM pg_notify('flagstack_sdk_invalidate', payload::text);
+    PERFORM pg_notify('switchonyourcode_sdk_invalidate', payload::text);
     IF TG_OP = 'DELETE' THEN
         RETURN OLD;
     END IF;
@@ -236,37 +236,37 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS flagstack_sdk_invalidate_flag_configs ON environment_flag_configs;
-CREATE TRIGGER flagstack_sdk_invalidate_flag_configs
+DROP TRIGGER IF EXISTS switchonyourcode_sdk_invalidate_flag_configs ON environment_flag_configs;
+CREATE TRIGGER switchonyourcode_sdk_invalidate_flag_configs
 AFTER INSERT OR UPDATE OR DELETE ON environment_flag_configs
-FOR EACH ROW EXECUTE FUNCTION flagstack_notify_sdk_invalidation();
+FOR EACH ROW EXECUTE FUNCTION switchonyourcode_notify_sdk_invalidation();
 
-DROP TRIGGER IF EXISTS flagstack_sdk_invalidate_feature_flags ON feature_flags;
-CREATE TRIGGER flagstack_sdk_invalidate_feature_flags
+DROP TRIGGER IF EXISTS switchonyourcode_sdk_invalidate_feature_flags ON feature_flags;
+CREATE TRIGGER switchonyourcode_sdk_invalidate_feature_flags
 AFTER INSERT OR UPDATE OR DELETE ON feature_flags
-FOR EACH ROW EXECUTE FUNCTION flagstack_notify_sdk_invalidation();
+FOR EACH ROW EXECUTE FUNCTION switchonyourcode_notify_sdk_invalidation();
 
-DROP TRIGGER IF EXISTS flagstack_sdk_invalidate_segments ON segments;
-CREATE TRIGGER flagstack_sdk_invalidate_segments
+DROP TRIGGER IF EXISTS switchonyourcode_sdk_invalidate_segments ON segments;
+CREATE TRIGGER switchonyourcode_sdk_invalidate_segments
 AFTER INSERT OR UPDATE OR DELETE ON segments
-FOR EACH ROW EXECUTE FUNCTION flagstack_notify_sdk_invalidation();
+FOR EACH ROW EXECUTE FUNCTION switchonyourcode_notify_sdk_invalidation();
 
-DROP TRIGGER IF EXISTS flagstack_sdk_invalidate_environments ON environments;
-CREATE TRIGGER flagstack_sdk_invalidate_environments
+DROP TRIGGER IF EXISTS switchonyourcode_sdk_invalidate_environments ON environments;
+CREATE TRIGGER switchonyourcode_sdk_invalidate_environments
 AFTER INSERT OR UPDATE OR DELETE ON environments
-FOR EACH ROW EXECUTE FUNCTION flagstack_notify_sdk_invalidation();
+FOR EACH ROW EXECUTE FUNCTION switchonyourcode_notify_sdk_invalidation();
 
-DROP TRIGGER IF EXISTS flagstack_sdk_invalidate_projects ON projects;
-CREATE TRIGGER flagstack_sdk_invalidate_projects
+DROP TRIGGER IF EXISTS switchonyourcode_sdk_invalidate_projects ON projects;
+CREATE TRIGGER switchonyourcode_sdk_invalidate_projects
 AFTER UPDATE OR DELETE ON projects
-FOR EACH ROW EXECUTE FUNCTION flagstack_notify_sdk_invalidation();
+FOR EACH ROW EXECUTE FUNCTION switchonyourcode_notify_sdk_invalidation();
 
-DROP TRIGGER IF EXISTS flagstack_sdk_invalidate_credentials ON sdk_credentials;
-CREATE TRIGGER flagstack_sdk_invalidate_credentials
+DROP TRIGGER IF EXISTS switchonyourcode_sdk_invalidate_credentials ON sdk_credentials;
+CREATE TRIGGER switchonyourcode_sdk_invalidate_credentials
 AFTER UPDATE OF revoked_at ON sdk_credentials
 FOR EACH ROW
 WHEN (OLD.revoked_at IS DISTINCT FROM NEW.revoked_at)
-EXECUTE FUNCTION flagstack_notify_sdk_invalidation();
+EXECUTE FUNCTION switchonyourcode_notify_sdk_invalidation();
 `
 	if _, err := pool.Exec(ctx, statement); err != nil {
 		return fmt.Errorf("install SDK invalidation triggers: %w", err)

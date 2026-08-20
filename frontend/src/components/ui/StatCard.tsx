@@ -16,7 +16,7 @@ const accentClasses: Record<Accent, string> = {
   green: 'bg-emerald-500/10 text-emerald-400',
   orange: 'bg-amber-500/10 text-amber-400',
   red: 'bg-red-500/10 text-red-400',
-  violet: 'bg-flagstack-500/10 text-flagstack-400',
+  violet: 'bg-switchonyourcode-500/10 text-switchonyourcode-400',
 }
 
 export function StatCard({ accent = 'violet', helper, icon, label, value }: StatCardProps) {

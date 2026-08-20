@@ -11,7 +11,7 @@ ent-generate:
 	cd backend && go generate ./ent
 
 dev-backend: ent-generate
-	$(LOAD_ENV) cd backend && go run ./cmd/flagstack
+	$(LOAD_ENV) cd backend && go run ./cmd/switchonyourcode
 
 dev-frontend:
 	cd frontend && pnpm dev
@@ -29,12 +29,12 @@ selfhost-down:
 	docker compose -f compose.selfhost.yml down
 
 image:
-	docker build -t flagstack/flagstack:local .
+	docker build -t switchonyourcode/switchonyourcode:local .
 
 db-up: db-migrate
 
 db-migrate: ent-generate
-	$(LOAD_ENV) : "$${FLAGSTACK_DATABASE_URL:?FLAGSTACK_DATABASE_URL is required}"; cd backend && go run ./cmd/flagstack-migrate
+	$(LOAD_ENV) : "$${SWITCHONYOURCODE_DATABASE_URL:?SWITCHONYOURCODE_DATABASE_URL is required}"; cd backend && go run ./cmd/switchonyourcode-migrate
 
 fmt:
 	cd backend && gofmt -w .

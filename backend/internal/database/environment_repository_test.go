@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	coreenvironment "github.com/flagstack/flagstack/backend/internal/environment"
+	coreenvironment "github.com/switchonyourcode/switchonyourcode/backend/internal/environment"
 )
 
 func TestEnvironmentRepositoryIntegration(t *testing.T) {
-	databaseURL := os.Getenv("FLAGSTACK_TEST_DATABASE_URL")
+	databaseURL := os.Getenv("SWITCHONYOURCODE_TEST_DATABASE_URL")
 	if databaseURL == "" {
-		t.Skip("FLAGSTACK_TEST_DATABASE_URL is not set")
+		t.Skip("SWITCHONYOURCODE_TEST_DATABASE_URL is not set")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

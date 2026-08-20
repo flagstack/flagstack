@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	coreauth "github.com/flagstack/flagstack/backend/internal/auth"
-	corefeatureflag "github.com/flagstack/flagstack/backend/internal/featureflag"
+	coreauth "github.com/switchonyourcode/switchonyourcode/backend/internal/auth"
+	corefeatureflag "github.com/switchonyourcode/switchonyourcode/backend/internal/featureflag"
 )
 
 type fakeFeatureFlagRepository struct {

@@ -87,7 +87,7 @@ export function SDKCredentialsPanel({
         </div>
         {canManage && environments.length > 0 ? (
           <button
-            className="rounded-lg bg-flagstack-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-flagstack-500"
+            className="rounded-lg bg-switchonyourcode-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-switchonyourcode-500"
             onClick={() => setCreating((value) => !value)}
             type="button"
           >
@@ -130,7 +130,7 @@ export function SDKCredentialsPanel({
           <label className="block">
             <span className="mb-1.5 block text-xs font-medium text-slate-400">Name</span>
             <input
-              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-flagstack-500"
+              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-switchonyourcode-500"
               maxLength={160}
               onChange={(event) => setName(event.target.value)}
               placeholder="Production backend"
@@ -141,7 +141,7 @@ export function SDKCredentialsPanel({
           <label className="block">
             <span className="mb-1.5 block text-xs font-medium text-slate-400">Environment</span>
             <select
-              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-flagstack-500"
+              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-switchonyourcode-500"
               onChange={(event) => setEnvironmentID(event.target.value)}
               value={selectedEnvironmentID}
             >
@@ -153,7 +153,7 @@ export function SDKCredentialsPanel({
           <label className="block">
             <span className="mb-1.5 block text-xs font-medium text-slate-400">Key type</span>
             <select
-              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-flagstack-500"
+              className="w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-slate-200 outline-none transition focus:border-switchonyourcode-500"
               onChange={(event) => setKind(event.target.value as SDKCredentialKind)}
               value={kind}
             >
@@ -168,7 +168,7 @@ export function SDKCredentialsPanel({
                 : 'Safe to identify a client SDK, but only client-visible flags will be delivered.'}
             </p>
             <button
-              className="rounded-lg bg-flagstack-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-flagstack-500 disabled:opacity-50"
+              className="rounded-lg bg-switchonyourcode-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-switchonyourcode-500 disabled:opacity-50"
               disabled={submitting}
               type="submit"
             >

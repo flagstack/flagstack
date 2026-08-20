@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	coresdkconfig "github.com/flagstack/flagstack/backend/internal/sdkconfig"
+	coresdkconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/sdkconfig"
 )
 
 const sdkEventHeartbeatInterval = 15 * time.Second
@@ -294,7 +294,7 @@ func bearerToken(header string) (string, bool) {
 }
 
 func writeSDKUnauthorized(w http.ResponseWriter) {
-	w.Header().Set("WWW-Authenticate", `Bearer realm="FlagStack SDK"`)
+	w.Header().Set("WWW-Authenticate", `Bearer realm="SwitchOnYourCode SDK"`)
 	writeAPIError(w, http.StatusUnauthorized, "invalid_sdk_credential", "A valid SDK credential is required.")
 }
 

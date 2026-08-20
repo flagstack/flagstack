@@ -8,14 +8,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/flagstack/flagstack/backend/internal/evaluation"
-	coretargeting "github.com/flagstack/flagstack/backend/internal/targeting"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
+	coretargeting "github.com/switchonyourcode/switchonyourcode/backend/internal/targeting"
 )
 
 func TestTargetingRepositoryIntegration(t *testing.T) {
-	databaseURL := os.Getenv("FLAGSTACK_TEST_DATABASE_URL")
+	databaseURL := os.Getenv("SWITCHONYOURCODE_TEST_DATABASE_URL")
 	if databaseURL == "" {
-		t.Skip("FLAGSTACK_TEST_DATABASE_URL is not set")
+		t.Skip("SWITCHONYOURCODE_TEST_DATABASE_URL is not set")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)

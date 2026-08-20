@@ -1,6 +1,6 @@
 # Core data model
 
-FlagStack's persistence model establishes identity, tenancy, and the project/environment/flag hierarchy while keeping evaluation configuration local to those boundaries.
+Switch On Your Code's persistence model establishes identity, tenancy, and the project/environment/flag hierarchy while keeping evaluation configuration local to those boundaries.
 
 ## Identity and organisations
 
@@ -22,7 +22,7 @@ Role constraints protect stored data integrity. Permission decisions remain an a
 
 ## Projects and environments
 
-A `project` belongs to exactly one organisation and represents an application or service integrating with FlagStack.
+A `project` belongs to exactly one organisation and represents an application or service integrating with Switch On Your Code.
 
 An `environment` belongs to exactly one project. Environment keys are unique within their project so common names such as `development`, `staging`, and `production` can be reused across projects.
 
@@ -112,7 +112,7 @@ A scheduled change contains:
 - an execution claim token and claim timestamp;
 - execution timestamp and failure detail.
 
-Due work is claimed conditionally in PostgreSQL. Claims have a bounded lease, allowing another FlagStack replica to reclaim work left `running` when a process dies. The claim token prevents the stale worker from later committing the same scheduled change.
+Due work is claimed conditionally in PostgreSQL. Claims have a bounded lease, allowing another Switch On Your Code replica to reclaim work left `running` when a process dies. The claim token prevents the stale worker from later committing the same scheduled change.
 
 Multiple scheduled policy patches can implement a progressive rollout without adding scheduler-specific evaluation behaviour.
 

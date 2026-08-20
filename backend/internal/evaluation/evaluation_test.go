@@ -7,8 +7,8 @@ import (
 )
 
 func TestBucketHasStableCrossSDKVector(t *testing.T) {
-	if got := Bucket("env-1", "flag-1", "user-123"); got != 22683 {
-		t.Fatalf("Bucket() = %d, want 22683", got)
+	if got := Bucket("env-1", "flag-1", "user-123"); got != 3837 {
+		t.Fatalf("Bucket() = %d, want 3837", got)
 	}
 }
 

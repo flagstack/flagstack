@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	coreauth "github.com/flagstack/flagstack/backend/internal/auth"
-	coreflagconfig "github.com/flagstack/flagstack/backend/internal/flagconfig"
+	coreauth "github.com/switchonyourcode/switchonyourcode/backend/internal/auth"
+	coreflagconfig "github.com/switchonyourcode/switchonyourcode/backend/internal/flagconfig"
 )
 
 type fakeFlagConfigRepository struct {

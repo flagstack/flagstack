@@ -1,4 +1,4 @@
-module github.com/flagstack/flagstack/backend
+module github.com/switchonyourcode/switchonyourcode/backend
 
 go 1.26.6
 

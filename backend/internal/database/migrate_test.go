@@ -13,9 +13,9 @@ import (
 )
 
 func TestMigrateIntegration(t *testing.T) {
-	databaseURL := os.Getenv("FLAGSTACK_TEST_DATABASE_URL")
+	databaseURL := os.Getenv("SWITCHONYOURCODE_TEST_DATABASE_URL")
 	if databaseURL == "" {
-		t.Skip("FLAGSTACK_TEST_DATABASE_URL is not set")
+		t.Skip("SWITCHONYOURCODE_TEST_DATABASE_URL is not set")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -75,9 +75,9 @@ func TestMigrateIntegration(t *testing.T) {
 }
 
 func TestMigrateUpgradesLegacyGooseSchema(t *testing.T) {
-	databaseURL := os.Getenv("FLAGSTACK_TEST_DATABASE_URL")
+	databaseURL := os.Getenv("SWITCHONYOURCODE_TEST_DATABASE_URL")
 	if databaseURL == "" {
-		t.Skip("FLAGSTACK_TEST_DATABASE_URL is not set")
+		t.Skip("SWITCHONYOURCODE_TEST_DATABASE_URL is not set")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -89,17 +89,17 @@ func TestMigrateUpgradesLegacyGooseSchema(t *testing.T) {
 	}
 	defer adminPool.Close()
 
-	const databaseName = "flagstack_legacy_ent_test"
-	if _, err := adminPool.Exec(ctx, `DROP DATABASE IF EXISTS flagstack_legacy_ent_test WITH (FORCE)`); err != nil {
+	const databaseName = "switchonyourcode_legacy_ent_test"
+	if _, err := adminPool.Exec(ctx, `DROP DATABASE IF EXISTS switchonyourcode_legacy_ent_test WITH (FORCE)`); err != nil {
 		t.Fatalf("drop stale legacy database: %v", err)
 	}
-	if _, err := adminPool.Exec(ctx, `CREATE DATABASE flagstack_legacy_ent_test`); err != nil {
+	if _, err := adminPool.Exec(ctx, `CREATE DATABASE switchonyourcode_legacy_ent_test`); err != nil {
 		t.Fatalf("create legacy database: %v", err)
 	}
 	defer func() {
 		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cleanupCancel()
-		_, _ = adminPool.Exec(cleanupCtx, `DROP DATABASE IF EXISTS flagstack_legacy_ent_test WITH (FORCE)`)
+		_, _ = adminPool.Exec(cleanupCtx, `DROP DATABASE IF EXISTS switchonyourcode_legacy_ent_test WITH (FORCE)`)
 	}()
 
 	legacyURL, err := databaseURLForDatabase(databaseURL, databaseName)

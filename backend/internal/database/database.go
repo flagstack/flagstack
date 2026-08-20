@@ -14,7 +14,7 @@ const pingTimeout = 5 * time.Second
 
 func Open(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	if strings.TrimSpace(databaseURL) == "" {
-		return nil, errors.New("FLAGSTACK_DATABASE_URL is required")
+		return nil, errors.New("SWITCHONYOURCODE_DATABASE_URL is required")
 	}
 
 	cfg, err := pgxpool.ParseConfig(databaseURL)
@@ -25,7 +25,7 @@ func Open(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	if cfg.ConnConfig.RuntimeParams == nil {
 		cfg.ConnConfig.RuntimeParams = make(map[string]string)
 	}
-	cfg.ConnConfig.RuntimeParams["application_name"] = "flagstack"
+	cfg.ConnConfig.RuntimeParams["application_name"] = "switchonyourcode"
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {

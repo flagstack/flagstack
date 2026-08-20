@@ -39,7 +39,7 @@ func VerifyPassword(encoded, password string) (bool, error) {
 }
 
 func dummyPasswordHash() string {
-	return encodePassword("flagstack-invalid-password", make([]byte, argon2SaltLength), argon2Memory, argon2Iterations, argon2Parallelism, argon2KeyLength)
+	return encodePassword("switchonyourcode-invalid-password", make([]byte, argon2SaltLength), argon2Memory, argon2Iterations, argon2Parallelism, argon2KeyLength)
 }
 
 func encodePassword(password string, salt []byte, memory, iterations uint32, parallelism uint8, keyLength uint32) string {

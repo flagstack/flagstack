@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/flagstack/flagstack/backend/internal/evaluation"
-	coretargeting "github.com/flagstack/flagstack/backend/internal/targeting"
+	"github.com/switchonyourcode/switchonyourcode/backend/internal/evaluation"
+	coretargeting "github.com/switchonyourcode/switchonyourcode/backend/internal/targeting"
 )
 
 type targetingHandlers struct {
